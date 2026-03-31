@@ -3,6 +3,7 @@ import { airports, type airportType } from './airports';
 import { globals } from './compiler';
 import { findStops, IATAtoAirport } from './utils';
 import { lastTime } from './tick';
+import { shuffle } from './utils/basic';
 let flights: {
 	passengers: { destination: string; count: number }[];
 	arrivalTime: number;
@@ -67,7 +68,7 @@ function land(flightDepartureLocation: string, flightArrivalLocation: string) {
 			} else {
 				// If you are connecting, your bags will be automatically transferred to your next flight
 				let nextAirportProxy = IATAtoAirport(flightArrivalLocation);
-				let nextAirport = new Proxy(get(airports)[get(airports).indexOf(nextAirportProxy)], {});
+				let nextAirport = new Proxy(get(airports).find(v=>v==nextAirportProxy), {});
 				// Add the passengers to their destination
 				nextAirport.population += group.count;
 				let travelersProxy: any = nextAirport.travelers.filter(v=>
@@ -113,9 +114,8 @@ export function setFlights() {
 	const airportsNow: airportType[] = get(airports).filter(v=>v.queryResult <= globals.level);
 	resetSlots(airportsNow);
 	airportsNow.map((airportA) => {
-		airportsNow
-			.sort(() => Math.random() * 2 - 1)
-			.filter(v=>v.IATA != airportA.IATA)
+		shuffle(airportsNow
+			.filter(v=>v.IATA != airportA.IATA))
 			.forEach((airportB) => {
 				// Find what gate you need to be at and board.
 				if (!airportB.gates.filter(v=>!!v).length) return;

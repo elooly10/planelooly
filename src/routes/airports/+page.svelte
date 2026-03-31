@@ -292,6 +292,10 @@
 	}
 	onMount(mount);
 </script>
+<svelte:head>
+	<title>Airports list - Planelooly</title>
+	<meta name='desc' content='Airports map for Planelooly.'/>
+</svelte:head>
 
 {#if loading}
 	<div class="w-screen h-screen relative bg-white top-0 left-0">

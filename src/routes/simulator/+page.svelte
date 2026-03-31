@@ -124,11 +124,11 @@
 	<details open>
 		<summary class="font-bold text-lg">Level Simulator</summary>
 		<div class="w-full h-[40vh] flex">
-			<canvas bind:this={chart} width="1500" height="500" class="h-full" />
+			<canvas bind:this={chart} width="1500" height="500" class="h-full dark:invert" />
 			<div class="max-h-full overflow-y-scroll mx-4 mt-3">
 				{#key starterChoices}
 					<h2 class="text-2xl font-bold inline">Level {level.number} ({level.name})</h2>
-					<p class={accuracy > 2000 ? 'text-black' : 'text-red-600'}>
+					<p class={accuracy > 2000 ? 'text-black dark:text-white' : 'text-red-600'}>
 						Accuracy: {100 - Math.round(1000000 / accuracy) / 10000}%; {dataArr.length} airports
 					</p>
 				{/key}
@@ -147,18 +147,17 @@
 				<div class="h-max">
 					<table class="neat h-max">
 						{#each dataArr as data}
+							{@const hsl = IATAtoHSL(data.label)}
 							<tr class="max-h-max">
 								<td
-									style="background: hsl({IATAtoHSL(data.label)[0]}deg, {IATAtoHSL(
-										data.label
-									)[1]}%, {IATAtoHSL(data.label)[2]}%); color: hsl({IATAtoHSL(
-										data.label
-									)[1]}deg, {IATAtoHSL(data.label)[1]}%, 10%)"
+									style="background: hsl({hsl[0]}deg, {hsl[1]}%, {hsl[2]}%); color: hsl({hsl[0]}deg, {hsl[1]}%, 10%)"
+									class="dark:invert"
 									on:click={() => {
 										IATA = data.label;
 										simulate();
 									}}>{data.label}</td
 								>
+								
 								<td class="w-full">{IATAtoAirport(data.label).location}</td>
 								<!-- <td>{IATAtoAirport(data.label).enplanements}</td> -->
 								<td>{Math.round(data.value * 10000) / 100}%</td>

@@ -116,16 +116,18 @@
 		showLoss = lost && !blockShow;
 		if (lost) globals.increment = 0;
 		won = !(globals.stars - globals.starLevels.length) && !blockShow && !lost;
+		showWin = won && !blockShow;
 	}, 200);
 	let airportID = 0;
 
 	let showLoss: boolean = false,
+		showWin = false,
 		showSettings = false,
 		blockShow = false;
 
 	// Click play!
 	function playButton() {
-		if (showTutorial || showLoss || showSettings || won || blockShow) return;
+		if (showTutorial || showLoss || showSettings || showWin || blockShow) return;
 		else {
 			globals.increment = playSpeed ? playSpeed : 1;
 		}
@@ -242,7 +244,10 @@
 		level.airportsList();
 	}
 </script>
-
+<svelte:head>
+	<title>Level {level.number} - Planelooly</title>
+	<meta name='desc' content='Connect {(typeof level.number == 'number' && level.number < 57)? level.name + ' ' : ''}airports to keep passenger counts low in this strategy game.'/>
+</svelte:head>
 <svelte:window on:keydown={readKey} />
 <!-- * Ready To Go! -->
 <div class="flex flex-wrap flex-col items-center overflow-hidden">
@@ -407,12 +412,12 @@
 					</div>
 				</div>
 			</Modal>
-			<Modal bind:show={won} onclose={() => (blockShow = true)}>
+			<Modal bind:show={showWin} onclose={() => blockShow = true}>
 				<div class="flex items-center justify-between">
 					<h2 class='text-2xl font-bold'>You won!</h2>
 					<button
 						class="flex-grow-0 hover:bg-stone-300 dark:hover:bg-zinc-800 rounded-full w-12 h-12 text-2xl font-bold"
-						on:click={() => (showTutorial = false)}>&times;</button
+						on:click={() => (showWin = false)}>&times;</button
 					>
 				</div>
 				<div class="flex-col">

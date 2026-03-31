@@ -10,7 +10,7 @@ let loading = true;
 let lost = false;
 export let lastTime = 0;
 function incrementTime() {
-	const airportCentral = get(airports).filter(v=>v.IATA === globals.centralAirport)[0];
+	const airportCentral = get(airports).filter(v => v.IATA === globals.centralAirport)[0];
 	if (!loading) {
 		airports.set(get(airports).map((v) => {
 			if (v.travelers) v.travelers.sort((a, b) => sortTravelers(v, a, b));
@@ -22,22 +22,23 @@ function incrementTime() {
 		globals.day * 0.85 +
 		Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult);
 	if (Math.floor(globals.day) !== Math.floor(lastTime) && globals.increment) {
-		globals.tokens += Math.round(
-			globals.hardness *
+		globals.tokens +=
+			Math.max(
+				Math.ceil(globals.hardness * globals.day / 5),
 				Math.ceil(
-					Math.ceil(globals.day / 10) +
-						get(airports)
-							.filter(v=>
-								v.queryResult <=
-								Math.ceil(globals.day + 0.01) * 0.85 +
-									Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult)
-								&& v.queryResult >=
-								Math.floor(globals.day) * 0.85 +
-									Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult)
-							).length *
-							3
+					globals.hardness *
+					get(airports)
+						.filter(v =>
+							v.queryResult <=
+							Math.ceil(globals.day + 0.01) * 0.85 +
+							Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult)
+							&& v.queryResult >=
+							Math.floor(globals.day) * 0.85 +
+							Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult)
+						).length *
+					2.35
 				)
-		);
+			);
 		console.log('Updated Tokens');
 	}
 	if (globals.day >= globals.starLevels[globals.stars]) {
@@ -49,16 +50,15 @@ function incrementTime() {
 }
 function increasePopulation() {
 	let gotAirports = get(airports);
+	// If there is a new airport, assign it population
+	const defaultPopulationBase =
+		mean(...gotAirports.filter((v) => v.queryResult <= globals.level).map(v => v.enplanements)) /
+		8 +
+		12.2;
 	gotAirports.forEach((airport) => {
 		/* Well, we need to set the population somewhere */
 		if (globals.level >= airport.queryResult) {
 			/* Set population */
-			// If there is a new airport, assign it population
-			const defaultPopulation =
-				mean(...gotAirports.filter((v)=>v.queryResult <= globals.level).map(v => v.enplanements)) /
-					8 +
-				Math.sqrt(airport.enplanements) * 2 +
-				12.2;
 			if (
 				(typeof airport.population !== 'number' || isNaN(airport.population)) &&
 				airport.queryResult >= 0
@@ -78,7 +78,7 @@ function increasePopulation() {
 				airport.population =
 					typeof airport.population === 'number' && !isNaN(airport.population)
 						? airport.population + growthRate * globals.increment
-						: defaultPopulation;
+						: defaultPopulationBase + Math.sqrt(airport.enplanements) * 2;
 				airport.growthRate = 500 * growthRate;
 			} catch (error) {
 				console.error(`Error during population assignment: ${error}`);
@@ -110,9 +110,9 @@ function calculateTravelers(
 }
 function addTravelers() {
 	const gotAirports = get(airports);
-	const receivedAirports = gotAirports.filter(v=>v.queryResult <= globals.level);
+	const receivedAirports = gotAirports.filter(v => v.queryResult <= globals.level);
 	const airportPopulationSum = receivedAirports.map(v => v.enplanements).reduce((a, b) => a + b, 0);
-	gotAirports.filter(v=>v.queryResult <= globals.level).forEach((airport: airportType, i) => {
+	gotAirports.filter(v => v.queryResult <= globals.level).forEach((airport: airportType, i) => {
 		const oldTravelers: { location: string; travelers: number; interest: number }[] = [];
 
 		// Assign values to the oldTravelers array
@@ -121,7 +121,7 @@ function addTravelers() {
 				location: string;
 				travelers: number;
 				interest: number;
-			} = airport.travelers?.filter(v=>v.location == value.IATA)[0];
+			} = airport.travelers?.filter(v => v.location == value.IATA)[0];
 			/* Assign oldTravelers value */
 			if (value.IATA !== airport.IATA) {
 				//console.log(`${airport.location}→${value.location}: ${travelers?.travelers ?? 0} travelers`);
@@ -158,19 +158,19 @@ function addTravelers() {
 							airport,
 							airportB,
 							(airportPopulationSum - airport.enplanements) /
-								(gotAirports
-									.filter(v=>
-										v.queryResult <= globals.level &&
-										v.IATA == airport.IATA
-									)
-									.map(v=>v.enplanements).length -
-									1)
+							(gotAirports
+								.filter(v =>
+									v.queryResult <= globals.level &&
+									v.IATA == airport.IATA
+								)
+								.map(v => v.enplanements).length -
+								1)
 						)
 					});
 				}
 			});
 			// #2: Assign
-			const percentageSum = percentages.map(v=>v.score).reduce((a, b)=>a+b,0);
+			const percentageSum = percentages.map(v => v.score).reduce((a, b) => a + b, 0);
 			percentages.map((value) => {
 				value.score /= percentageSum;
 			}); // The percentages are now actually percentages.
@@ -184,15 +184,13 @@ function addTravelers() {
 				let sumScore = 0;
 				percentages.forEach((value) => {
 					if (!newTravelers.find(v => v.location === value.airport.IATA)) return;
-					newTravelers.find(v=>v.location === value.airport.IATA).interest = value.score;
+					newTravelers.find(v => v.location === value.airport.IATA).interest = value.score;
 					if (value.score + sumScore >= choiceNum && !choice) choice = value.airport;
 					sumScore += value.score;
 				});
 				if (!choice) return;
 				//console.log(`Picked ${choice.IATA} to delegate a ${airport.IATA} traveler to.`);
-				newTravelers[
-					newTravelers.indexOf(newTravelers.filter(v=>v.location == choice.IATA)[0])
-				].travelers++;
+				newTravelers.find(v => v.location == choice.IATA).travelers++;
 			}
 			// used if TSM = 'gates'
 			gotAirports[i].travelers = newTravelers.sort((a, b) => sortTravelers(gotAirports[i], a, b));
@@ -204,7 +202,7 @@ function checkForLoss() {
 	if (
 		Math.round(
 			Math.max(
-				...get(airports).filter(v=>v.queryResult <= globals.level).map(v=>v.population)
+				...get(airports).filter(v => v.queryResult <= globals.level).map(v => v.population)
 			)
 		) >= 200 &&
 		browser &&

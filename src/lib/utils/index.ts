@@ -58,7 +58,10 @@ export const states = {
 	WV: 'West Virginia',
 	WI: 'Wisconsin',
 	WY: 'Wyoming',
-	VI: 'Virgin Islands'
+	VI: 'Virgin Islands',
+	PW: 'Palau',
+	MH: 'Marshall Islands',
+	UM: 'United States'
 };
 export function postalToState(code) {
 	return states[code];
