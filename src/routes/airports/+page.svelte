@@ -295,6 +295,10 @@
 <svelte:head>
 	<title>Airports list - Planelooly</title>
 	<meta name='desc' content='Airports map for Planelooly.'/>
+	<meta property="og:title" content="Airports list - Planelooly" />
+	<meta property="og:description" content='Airports map for Planelooly.' />
+	<meta name="twitter:title" content="Airports list - Planelooly" />
+	<meta name="twitter:description" content='CAirports map for Planelooly.' />
 </svelte:head>
 
 {#if loading}

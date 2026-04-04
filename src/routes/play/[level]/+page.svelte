@@ -247,6 +247,10 @@
 <svelte:head>
 	<title>Level {level.number} - Planelooly</title>
 	<meta name='desc' content='Connect {(typeof level.number == 'number' && level.number < 57)? level.name + ' ' : ''}airports to keep passenger counts low in this strategy game.'/>
+	<meta property="og:title" content="Level {level.number} - Planelooly" />
+	<meta property="og:description" content='Connect {(typeof level.number == 'number' && level.number < 57)? level.name + ' ' : ''}airports to keep passenger counts low in this strategy game.' />
+	<meta name="twitter:title" content="Level {level.number} - Planelooly" />
+	<meta name="twitter:description" content='Connect {(typeof level.number == 'number' && level.number < 57)? level.name + ' ' : ''}airports to keep passenger counts low in this strategy game.' />
 </svelte:head>
 <svelte:window on:keydown={readKey} />
 <!-- * Ready To Go! -->

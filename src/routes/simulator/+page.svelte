@@ -114,7 +114,9 @@
 	simulate();
 	let ranges: { a: number[]; t: number }[] = [];
 </script>
-
+<svelte:head>
+	<title>Simulator – Planelooly</title>
+</svelte:head>
 <div class="p-8 w-full">
 	<h1 class="text-3xl font-bold">
 		<a href="/" class="gap-4 flex items-center hover:underline"

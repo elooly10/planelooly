@@ -14,6 +14,10 @@
 <svelte:head>
 	<title>Planelooly</title>
 	<meta name='desc' content='Connect airports to keep passenger counts low in this strategy game.'/>
+	<meta property="og:title" content="Planelooly" />
+	<meta property="og:description" content='Connect airports to keep passenger counts low in this strategy game.' />
+	<meta name="twitter:title" content="Planelooly" />
+	<meta name="twitter:description" content='Connect airports to keep passenger counts low in this strategy game.' />
 </svelte:head>
 <div class="md:hidden">
 	<Modal show={screenModal}>

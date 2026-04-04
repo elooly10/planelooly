@@ -283,7 +283,7 @@ export function funFact() {
 		'The airport in Jackson, Wyoming is in Grand Teton National Park.',
 		'Atlanta\'s Hartsfield-Jackson International Airport is the busiest in the world.',
 		'Florida and California both have 12 high-popularity airports.',
-		'43 state have a high-popularity or very high-popularity airport.'
+		'43 states have a high-popularity or very high-popularity airport.'
 	];
 	return funFacts[Math.floor(Math.random() * funFacts.length)];
 }
