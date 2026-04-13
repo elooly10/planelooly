@@ -34,7 +34,6 @@ export function compiler() {
 		console.log('Compiling airports list');
 		mode.airportsList();
 		let start = mode.starterAirport()
-		console.log(start);
 		airportCentral = get(airports).filter((v)=>v.IATA === start)[0];
 		globals.centralAirport = airportCentral.IATA;
 		console.log(`Central Airport Identified as ${airportCentral.IATA}`);
@@ -55,6 +54,6 @@ export function compiler() {
 				3) *
 				globals.hardness
 		);
-	} else goto('/game/plane');
+	} else goto('/');
 }
 export let j = 0;

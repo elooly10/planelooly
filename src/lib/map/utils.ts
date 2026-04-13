@@ -71,7 +71,7 @@ export function pin(
 			? 'plum'
 			: airport.type === 'altFocus'
 			? 'darkPlum'
-			: airport.gates?.filter(v=>!!v)?.length === 0
+			: airport.gates === 0
 			? 'scarlet'
 			: airport.enplanements >= 1
 			? 'smokeStone'
