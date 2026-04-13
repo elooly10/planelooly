@@ -18,7 +18,7 @@ function sellGate(airportIDLocal) {
 	}
 }
 // Connect two airports
-export function addGate(airportAID, airportBID, hideAlert = false) {
+export function addGate(airportAID: number, airportBID: number, hideAlert = false) {
 	let airportA = new Proxy(get(airports)[airportAID], {});
 	let airportB = new Proxy(get(airports)[airportBID], {});
 	console.log(`Connecting ${airportA.IATA} and ${airportB.IATA}`);

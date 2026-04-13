@@ -10,9 +10,10 @@ let loading = true;
 let lost = false;
 export let lastTime = 0;
 function incrementTime() {
-	const airportCentral = get(airports).filter(v => v.IATA === globals.centralAirport)[0];
+	const points = get(airports);
+	const airportCentral = points.filter(v => v.IATA === globals.centralAirport)[0];
 	if (!loading) {
-		airports.set(get(airports).map((v) => {
+		airports.set(points.map((v) => {
 			if (v.travelers) v.travelers.sort((a, b) => sortTravelers(v, a, b));
 			return v;
 		}));
@@ -27,14 +28,14 @@ function incrementTime() {
 				Math.ceil(globals.hardness * globals.day / 5),
 				Math.ceil(
 					globals.hardness *
-					get(airports)
+					points
 						.filter(v =>
 							v.queryResult <=
 							Math.ceil(globals.day + 0.01) * 0.85 +
-							Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult)
+							Math.max(0, airportCentral.queryResult, points[2].queryResult)
 							&& v.queryResult >=
 							Math.floor(globals.day) * 0.85 +
-							Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult)
+							Math.max(0, airportCentral.queryResult, points[2].queryResult)
 						).length *
 					2.35
 				)
@@ -175,7 +176,6 @@ function addTravelers() {
 				value.score /= percentageSum;
 			}); // The percentages are now actually percentages.
 
-			const newTravelers = oldTravelers;
 
 			// For each traveler, choose a random airport
 			for (let j = 0; j < diff; j++) {
@@ -183,17 +183,17 @@ function addTravelers() {
 				let choice: airportType;
 				let sumScore = 0;
 				percentages.forEach((value) => {
-					if (!newTravelers.find(v => v.location === value.airport.IATA)) return;
-					newTravelers.find(v => v.location === value.airport.IATA).interest = value.score;
+					if (!oldTravelers.find(v => v.location === value.airport.IATA)) return;
+					oldTravelers.find(v => v.location === value.airport.IATA).interest = value.score;
 					if (value.score + sumScore >= choiceNum && !choice) choice = value.airport;
 					sumScore += value.score;
 				});
 				if (!choice) return;
 				//console.log(`Picked ${choice.IATA} to delegate a ${airport.IATA} traveler to.`);
-				newTravelers.find(v => v.location == choice.IATA).travelers++;
+				oldTravelers.find(v => v.location == choice.IATA).travelers++;
 			}
 			// used if TSM = 'gates'
-			gotAirports[i].travelers = newTravelers.sort((a, b) => sortTravelers(gotAirports[i], a, b));
+			gotAirports[i].travelers = oldTravelers.sort((a, b) => sortTravelers(gotAirports[i], a, b));
 		}
 	});
 	airports.set(gotAirports);
@@ -214,7 +214,7 @@ function checkForLoss() {
 	}
 	return lost;
 }
-function tick() {
+export function tick() {
 	try {
 		if (globals.increment !== 0 || loading) {
 			incrementTime(); // Move time up, add tokens, add stars, etc.

@@ -177,7 +177,6 @@ function calculatePath(airportA: airportType, airportB: airportType): cacheType 
 			}
 		}
 
-		console.log(`No route found`);
 		return { order: [], sumTime: -1 };
 	} catch (err) {
 		console.error(err);
