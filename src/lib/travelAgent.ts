@@ -1,8 +1,8 @@
 import { get } from 'svelte/store';
-import { airports, type airportType } from './airports';
-import { IATAtoAirport } from './utils';
+import { airports, type airportType, type iata } from './airports';
+import { getActiveAirports, IATAtoAirport } from './utils';
 import { globals } from './compiler';
-type cacheFormat = { order: string[]; sumTime: number };
+type cacheFormat = { order: iata[]; sumTime: number };
 type cacheType = { order: airportType[]; sumTime: number };
 // Cache for storing pathfinding results
 let cache: { [key: string]: cacheFormat } = {};
@@ -21,12 +21,19 @@ function format(cacheType: cacheType): cacheFormat {
 export function findPath(airportA: airportType, airportB: airportType): cacheFormat {
 	// Create a unique key for each pair of airports
 	let key = `${airportA.IATA}-${airportB.IATA}`;
+	let reversedKey = `${airportB.IATA}-${airportA.IATA}`;
 
 	// If the result is in the cache, return it
 	if (cache[key]) {
 		return cache[key];
 	}
-
+	if(cache[reversedKey]) {
+		cache[key] = {
+			sumTime: cache[reversedKey].sumTime,
+			order: cache[reversedKey].order.toReversed()
+		}
+		return cache[key];
+	}
 	// Otherwise, calculate the path
 	let path = calculatePath(airportA, airportB);
 
@@ -40,24 +47,24 @@ export function resetCache() {
 	// Delete cache
 	cache = {};
 	// Create airports list
-	const validAirports = get(airports).filter((v)=>v.queryResult <= globals.day);
+	const validAirports = getActiveAirports(get(airports), globals.level);
 	validAirports.forEach((airportA: airportType) => {
 		validAirports.forEach((airportB: airportType) => {
-			if (airportA.IATA === airportB.IATA) return;
+			if (airportA.IATA < airportB.IATA) return;
 			findPath(airportA, airportB);
 		});
 	});
 }
 
 class MinPriorityQueue {
-	heap = [];
+	heap: {element: queueElem, priority: number}[] = [];
 	constructor() {
 		this.heap = [];
 	}
 
 	// Insert an element with a given priority
 	enqueue(
-		element: { airport: airportType; time: any; order: any[] | undefined[] },
+		element: queueElem,
 		priority: number
 	) {
 		this.heap.push({ element, priority });
@@ -144,7 +151,7 @@ class MinPriorityQueue {
 
 function calculatePath(airportA: airportType, airportB: airportType): cacheType {
 	try {
-		if (!airportA.gates.length) {
+		if (airportA.gates == 0 || airportB.gates == 0) {
 			return { order: [], sumTime: -1 };
 		}
 
@@ -166,12 +173,13 @@ function calculatePath(airportA: airportType, airportB: airportType): cacheType 
 			}
 			visited.set(airport.IATA, time);
 
-			for (let gate of airport.gates) {
-				let nextAirport = IATAtoAirport(gate.IATA);
+			for (let gate of Object.values(airport.connections)) {
+				if(gate.gates == 0 || gate.location == airport.IATA) continue;
+				let nextAirport = IATAtoAirport(gate.location);
 				let newTime = time + gate.speed;
 				let newOrder = [...order, airport];
 
-				if (!visited.has(gate.IATA) || newTime < visited.get(gate.IATA)) {
+				if (!visited.has(gate.location) || newTime < visited.get(gate.location)) {
 					queue.enqueue({ airport: nextAirport, time: newTime, order: newOrder }, newTime);
 				}
 			}
@@ -183,3 +191,4 @@ function calculatePath(airportA: airportType, airportB: airportType): cacheType 
 		return { order: [], sumTime: -1 };
 	}
 }
+type queueElem = { airport: airportType, time: number, order: airportType[] }

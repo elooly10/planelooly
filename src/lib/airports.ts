@@ -28,8 +28,7 @@ type letter =
 	| "Y"
 	| "Z";
 export type iata =
-	| `${letter}${letter}${letter}`
-	| string /* Compatibility only. Should always be 3l*/;
+	| `${letter}${letter}${letter}`;
 export type airportClass =
 	| "nonHub" /* Gray */
 	| "altFocus" /* Dark Purple */
@@ -43,24 +42,34 @@ export interface airportType {
 	IATA: iata;
 	latitude: number;
 	longitude: number;
-	state: `${letter}${letter}` | `${letter}${letter}${letter}` | string;
+	state: `${letter}${letter}` | `${letter}${letter}${letter}`;
 	enplanements: number;
 	queryResult?: number; //When it is added
-	travelers?: { location: iata; travelers: number; interest: number }[];
+	connections: Partial<Record<iata, 
+		connectionType
+	>>;
+	gates?: number; // Total number of gates at an airport
 	interestMode?: boolean;
 	population?: number;
 	growthRate?: number;
-	gates?: ({ IATA: iata; speed: number } | null)[];
 	type?: airportClass;
 	nearbyAirports?: string[];
 	qrImpact?: number;
 	popularityChange?: number;
+	unassignedTravelers: number;
+}
+export interface connectionType {
+	location: iata;
+	travelers: number;
+	interest: number
+	gates: number;
+	speed: number
 }
 export const airports: Writable<airportType[]> = writable([]);
 export function getAirports(
 	filter: (a: any) => boolean = () => true
 ): airportType[] {
-	let airports = [
+	let airports: Partial<airportType>[] = [
 		{
 			location: "Allentown",
 			IATA: "ABE",
@@ -5077,15 +5086,17 @@ export function getAirports(
 			qrImpact: -1
 		}
 	];
-	airports.map((value: airportType) => {
+	return airports.map((value: Partial<airportType>): airportType => {
 		value.type = "nonHub";
 		value.interestMode = false;
-		value.gates = [];
+		value.connections = {};
+		value.unassignedTravelers = 0;
 		if (!value.enplanements) {
 			value.enplanements = 0;
 		}
 		value.popularityChange = 1;
-	});
-	return airports.filter(filter);
+		value.gates = 0;
+		return value as airportType;
+	}).filter(filter);
 }
 // To get back up, Search 'ABE'

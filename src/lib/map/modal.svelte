@@ -69,7 +69,6 @@
 		if (!map) map = leaflet.map(mapElement);
 		else tileLayer();
 		var bounds = new leaflet.LatLngBounds(); // Create an empty bounding box
-		let gatesList = [];
 		//let markers = markerClusterGroup();
 		airports.sort((a, b) => b.enplanements - a.enplanements);
 		airports.forEach((airport: airportType) => {
@@ -90,37 +89,31 @@
 				marker.bindTooltip(`${airport.IATA} – ${getDescription(airport.enplanements)} popularity`);
 			} else marker.bindPopup(popUp(airport));
 			bounds.extend(marker.getLatLng());
-			airport.gates.forEach((gate) => {
-				if (!gatesList.includes([gate.IATA, airport.IATA])) {
-					gatesList.push([gate.IATA, airport.IATA]);
-					let airport2 = IATAtoAirport(gate.IATA);
-					function getColor() {
-						return HSLToHex(
+			Object.values(airport.connections).forEach(connection => {
+					let airport2 = IATAtoAirport(connection.location);
+					const color = HSLToHex(
 							((65 +
-								140 * airport.gates.filter(v=>v.IATA == gate.IATA).length) %
+								140 * connection.gates) %
 								360) +
 								360,
 							70,
 							50,
 						);
-					}
 					let line = leaflet.polyline(
 						[
 							[airport.latitude, airport.longitude],
 							[airport2.latitude, airport2.longitude]
 						],
 						{
-							color: getColor(),
+							color,
 							weight:
-								airport.gates.filter(v=>v.IATA === gate.IATA).length > 10
-									? 1.5 + 0.7 * airport.gates.filter(v=>v.IATA===gate.IATA).length
-									: 2 + airport.gates.filter(v=>v.IATA === gate.IATA).length
+								airport.connections[airport2.IATA].gates * 3
 						}
 					);
 					if (dblClick) {
 						line.on('click', () => {
 							if (Confirm(`Do you want to disconnect ${airport.IATA} and ${airport2.IATA}?`))
-								removeGate($airports.indexOf(airport), $airports.indexOf(airport2));
+								removeGate(airport, airport2);
 						});
 						line.on('contextmenu', () => {
 							if (
@@ -128,12 +121,11 @@
 									`Do you want to add an additional gate between ${airport.IATA} and ${airport2.IATA}?`
 								)
 							)
-								addGate($airports.indexOf(airport), $airports.indexOf(airport2), true);
+								addGate(airport, airport2, true);
 						});
 					}
 					map.addLayer(line);
-				}
-			});
+				});
 			map.addLayer(marker);
 		});
 		//map.addLayer(markers)

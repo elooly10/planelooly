@@ -121,7 +121,7 @@
 			case 'population':
 				return b.population - a.population;
 			case 'gates':
-				return b.gates.length - a.gates.length;
+				return b.gates - a.gates;
 			case 'kind':
 				return typeToValue(b.type) - typeToValue(a.type);
 			case 'alphabetical':
@@ -144,7 +144,7 @@
 				>
 				{#if sortType == 'gates'}
 					<span class="flex-grow text-center"
-						>{count(allAirports.map((a) => a.gates.length).reduce((a,b)=>a+b,0), 'gate', 's')}</span
+						>{count(allAirports.map((a) => a.gates).reduce((a,b)=>a+b,0), 'gate', 's')}</span
 					>
 				{:else if sortType == 'kind'}
 					<span class="flex-grow text-center"
@@ -187,12 +187,14 @@
 							{airport.IATA}
 						</td>
 						<td class="min-w-[7rem] text-white h-11 no-prose">
+						{#if !airport.gates}
 							<span
 								class="text-sm opacity-70 dark:opacity-80 rounded p-2 bg-pretzel-600"
-								class:hidden={!!airport.gates.length}
 							>
 								New
 							</span>
+						{/if}
+						{#if airport.type != 'nonHub'}
 							<span
 								class="text-sm opacity-70 dark:opacity-80 rounded p-2 transition-all duration-300 {airport.type ===
 								'primary'
@@ -207,13 +209,14 @@
 									? 'bg-focus-700'
 									: airport.type === 'altFocus'
 									? 'bg-focus-900'
-									: 'hidden'}"
+									: 'bg-orange-700'}"
 							>
 								{toType(airport.type)}
 							</span>
+						{/if}
 						</td>
 						<td class="h-11">{count(Math.round(airport.population), 'traveler', 's')}</td>
-						<td class="h-11 pr-2 rounded-r-lg">{count(airport.gates.length, 'gate', 's')}</td>
+						<td class="h-11 pr-2 rounded-r-lg">{count(airport.gates, 'gate', 's')}</td>
 					</tr>
 				{/each}
 			</table>

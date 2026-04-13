@@ -6,9 +6,7 @@
 	import { setLevel } from '$lib/level';
 	import MainColumn from '$lib/mainColumn.svelte';
 	import { tick } from '$lib/tick';
-	import { removeConfirmation } from '$lib/utils';
 	import MapModal from '$lib/map/modal.svelte';
-	import { onMount } from 'svelte';
 	import { delay } from '$lib/utils/basic';
 	let points = 70;
 	let gates = points * 2;
@@ -19,23 +17,28 @@
 		ticks = 0;
 		setLevel(58);
 		compiler();
-		removeConfirmation();
-		const baseResult = $airports[points - 1].queryResult;
-		for (let i = 0; i < points; i++) {
-			$airports[i].queryResult -= baseResult;
+		for (let i = 0; i < $airports.length; i++) {
+			if(i == 0) console.log($airports[i]);
+			if(i < points) $airports[i].queryResult = -i;
+			else $airports[i].queryResult = 2 * i
 		}
-		
+
+
+		tick();
+		console.log($airports);
+		await delay(1);
 		startTime = Date.now();
 		for (let i = 0; i < gates; i++) {
 			const airportA = Math.floor(Math.random() * points);
 			const airportB = Math.floor(Math.random() * (points - 1));
 			if (airportB >= airportA) {
-				addGate(airportA, airportB + 1);
+				addGate($airports[airportA], $airports[airportB + 1], true);
 			} else {
-				addGate(airportA, airportB);
+				addGate($airports[airportA], $airports[airportB], true);
 			}
 			globals.tokens += 2;
 		}
+		console.log("Added gates");
 		await delay(1);
 		tickTime = Date.now();
 		for (; ticks < 100; ticks++) {
@@ -70,8 +73,8 @@
 {:else}
 <button class='btn color-btn-game-primary' on:click={test}>Test</button>
 {/if}
-<div class="grid grid-cols-2 gap-8 p-8">
-	{#if $airports.length}
+<div class="grid grid-cols-2 gap-8 p-8 h-min">
+	{#if $airports.length && startTime}
 		<AirportModal airportID={0} />
 		<div class="flex flex-col">
 			<div class="w-full md:w-auto h-[50vh] min-w-[50%] overflow-y-scroll">

@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { globals, compiler } from './compiler';
 import { airports, type airportType } from './airports';
-import { haversineDistance, mapUpdatesClear, sortTravelers } from './utils';
+import { findSpeed, getActiveAirports, haversineDistance, mapUpdatesClear } from './utils';
 import { resetCache } from './travelAgent';
 import { setFlights } from './flights';
 import { browser } from '$app/environment';
@@ -12,12 +12,6 @@ export let lastTime = 0;
 function incrementTime() {
 	const points = get(airports);
 	const airportCentral = points.filter(v => v.IATA === globals.centralAirport)[0];
-	if (!loading) {
-		airports.set(points.map((v) => {
-			if (v.travelers) v.travelers.sort((a, b) => sortTravelers(v, a, b));
-			return v;
-		}));
-	}
 	globals.day += globals.increment / 500;
 	globals.level =
 		globals.day * 0.85 +
@@ -53,9 +47,10 @@ function increasePopulation() {
 	let gotAirports = get(airports);
 	// If there is a new airport, assign it population
 	const defaultPopulationBase =
-		mean(...gotAirports.filter((v) => v.queryResult <= globals.level).map(v => v.enplanements)) /
+		mean(...getActiveAirports(gotAirports, globals.level).map(v => v.enplanements)) /
 		8 +
 		12.2;
+	const newAirports: airportType[] = [];
 	gotAirports.forEach((airport) => {
 		/* Well, we need to set the population somewhere */
 		if (globals.level >= airport.queryResult) {
@@ -76,17 +71,22 @@ function increasePopulation() {
 					((globals.level - airport.queryResult) * 0.002 +
 						Math.sqrt(airport.enplanements) * 0.1 +
 						0.1);
-				airport.population =
-					typeof airport.population === 'number' && !isNaN(airport.population)
-						? airport.population + growthRate * globals.increment
-						: defaultPopulationBase + Math.sqrt(airport.enplanements) * 2;
+				if (typeof airport.population === 'number' && !isNaN(airport.population)) {
+					const initPopulation = Math.round(airport.population);
+					airport.population += growthRate * globals.increment
+					airport.unassignedTravelers = Math.round(airport.population) - initPopulation;
+				} else {
+					airport.population = defaultPopulationBase + Math.sqrt(airport.enplanements) * 2
+					airport.unassignedTravelers = Math.round(airport.population);
+					newAirports.push(airport);
+				}
 				airport.growthRate = 500 * growthRate;
 			} catch (error) {
 				console.error(`Error during population assignment: ${error}`);
 			}
 		}
 	});
-	airports.set(gotAirports);
+	return newAirports
 }
 
 function calculateTravelers(
@@ -109,94 +109,48 @@ function calculateTravelers(
 	}
 	return Math.max(value, 0);
 }
-function addTravelers() {
-	const gotAirports = get(airports);
-	const receivedAirports = gotAirports.filter(v => v.queryResult <= globals.level);
-	const airportPopulationSum = receivedAirports.map(v => v.enplanements).reduce((a, b) => a + b, 0);
-	gotAirports.filter(v => v.queryResult <= globals.level).forEach((airport: airportType, i) => {
-		const oldTravelers: { location: string; travelers: number; interest: number }[] = [];
-
-		// Assign values to the oldTravelers array
-		receivedAirports.forEach((value: airportType, j) => {
-			const travelers: {
-				location: string;
-				travelers: number;
-				interest: number;
-			} = airport.travelers?.filter(v => v.location == value.IATA)[0];
-			/* Assign oldTravelers value */
-			if (value.IATA !== airport.IATA) {
-				//console.log(`${airport.location}→${value.location}: ${travelers?.travelers ?? 0} travelers`);
-				try {
-					oldTravelers.push({
-						location: value.IATA,
-						travelers: travelers?.travelers ?? 0,
-						interest: travelers?.interest ?? 0
-					});
-				} catch (error) {
-					// We don't really care what the error is, we should just add a blank one.
-					oldTravelers.push({
-						location: value.IATA,
-						interest: 0,
-						travelers: 0
-					});
-				}
+function addTravelers(newAirports: airportType[]) {
+	const activeAirports = getActiveAirports(get(airports), globals.level);
+	const totalEnplanements = activeAirports.map(v => v.enplanements).reduce((a, b) => a + b, 0);
+	activeAirports.forEach((airport: airportType, i) => {
+		newAirports.forEach((airportB: airportType, j) => {
+			if(airportB == airport) return;
+			airport.connections[airportB.IATA] = {
+				location: airportB.IATA,
+				travelers: 0,
+				interest: 0, // To be filled in later
+				gates: 0,
+				speed: findSpeed(airport, airportB)
 			}
 		});
-		const totalTravelers = airport.travelers?.map(v => v.travelers).reduce((a, b) => a + b, 0)
-		if (Math.round(airport.population) !== totalTravelers) {
-			// #1: Calculate The percentages of each place using calculateTravelers(a, b, mean)
-			const diff =
-				Math.round(airport.population) - (totalTravelers ?? 0);
-			const percentages: {
-				airport: airportType;
-				score: number;
-			}[] = [];
-			receivedAirports.forEach((airportB: airportType) => {
-				if (airportB !== airport) {
-					percentages.push({
-						airport: airportB,
-						score: calculateTravelers(
-							airport,
-							airportB,
-							(airportPopulationSum - airport.enplanements) /
-							(gotAirports
-								.filter(v =>
-									v.queryResult <= globals.level &&
-									v.IATA == airport.IATA
-								)
-								.map(v => v.enplanements).length -
-								1)
-						)
-					});
-				}
-			});
-			// #2: Assign
-			const percentageSum = percentages.map(v => v.score).reduce((a, b) => a + b, 0);
-			percentages.map((value) => {
-				value.score /= percentageSum;
-			}); // The percentages are now actually percentages.
-
-
-			// For each traveler, choose a random airport
-			for (let j = 0; j < diff; j++) {
-				const choiceNum = Math.random();
-				let choice: airportType;
-				let sumScore = 0;
-				percentages.forEach((value) => {
-					if (!oldTravelers.find(v => v.location === value.airport.IATA)) return;
-					oldTravelers.find(v => v.location === value.airport.IATA).interest = value.score;
-					if (value.score + sumScore >= choiceNum && !choice) choice = value.airport;
-					sumScore += value.score;
-				});
-				if (!choice) return;
-				//console.log(`Picked ${choice.IATA} to delegate a ${airport.IATA} traveler to.`);
-				oldTravelers.find(v => v.location == choice.IATA).travelers++;
+		let sumInterests = 0;
+		for(const airportB of activeAirports) {
+			if (airportB == airport) continue;
+			const amount = calculateTravelers(
+				airport,
+				airportB,
+				totalEnplanements - airport.enplanements
+			)
+			sumInterests += amount
+			airport.connections[airportB.IATA].interest = amount
+		};
+		// #2: Assign
+		// For each traveler, choose a random airport
+		let rolls = new Array(airport.unassignedTravelers).fill(0).map(()=>Math.random() * sumInterests).sort((a, b) => b - a);
+		let viewed = 0;
+		for(const airportB of activeAirports) {
+			if (airportB == airport) continue;
+			viewed += airport.connections[airportB.IATA].interest;
+			airport.connections[airportB.IATA].interest /= sumInterests; // So it is a percent
+			if(viewed > rolls[rolls.length - 1]) {
+				rolls.splice(rolls.length - 1, 1);
+				airport.connections[airportB.IATA].travelers++;
 			}
-			// used if TSM = 'gates'
-			gotAirports[i].travelers = oldTravelers.sort((a, b) => sortTravelers(gotAirports[i], a, b));
-		}
+		};
+		airport.unassignedTravelers = 0;
+		// used if TSM = 'gates'
+
 	});
-	airports.set(gotAirports);
 }
 function checkForLoss() {
 	if (
@@ -218,8 +172,8 @@ export function tick() {
 	try {
 		if (globals.increment !== 0 || loading) {
 			incrementTime(); // Move time up, add tokens, add stars, etc.
-			increasePopulation(); // Add new people to the airports that deserve them.
-			addTravelers(); // Add to travelers
+			const newAirports = increasePopulation(); // Add new people to the airports that deserve them.
+			addTravelers(newAirports); // Add to travelers
 			if (!checkForLoss()) setFlights(); // Land flights
 			lastTime = globals.day;
 			loading = false;
