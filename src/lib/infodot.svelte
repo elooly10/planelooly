@@ -18,7 +18,7 @@
 			? 'bg-focus-600'
 			: airport.type === 'altFocus'
 			? 'bg-focus-800'
-			: airport.gates?.filter(v=>!!v).length === 0
+			: (number + airport.gates) === 0
 			? 'bg-pretzel-500'
 			: airport.enplanements >= 1
 			? 'bg-stone-500 dark:bg-zinc-500'

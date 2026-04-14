@@ -108,37 +108,31 @@ function calculateTravelers(
 	}
 	return Math.max(value, 0);
 }
-function addTravelers() {
-	const gotAirports = get(airports);
-	const receivedAirports = gotAirports.filter(v => v.queryResult <= globals.level);
-	const airportPopulationSum = receivedAirports.map(v => v.enplanements).reduce((a, b) => a + b, 0);
-	gotAirports.filter(v => v.queryResult <= globals.level).forEach((airport: airportType, i) => {
-		const oldTravelers: { location: string; travelers: number; interest: number }[] = [];
-
-		// Assign values to the oldTravelers array
-		receivedAirports.forEach((value: airportType, j) => {
-			const travelers: {
-				location: string;
-				travelers: number;
-				interest: number;
-			} = airport.travelers?.filter(v => v.location == value.IATA)[0];
-			/* Assign oldTravelers value */
-			if (value.IATA !== airport.IATA) {
-				//console.log(`${airport.location}→${value.location}: ${travelers?.travelers ?? 0} travelers`);
-				try {
-					oldTravelers.push({
-						location: value.IATA,
-						travelers: travelers?.travelers ?? 0,
-						interest: travelers?.interest ?? 0
-					});
-				} catch (error) {
-					// We don't really care what the error is, we should just add a blank one.
-					oldTravelers.push({
-						location: value.IATA,
-						interest: 0,
-						travelers: 0
-					});
+function addTravelers(newAirports: airportType[]) {
+	const activeAirports = getActiveAirports(get(airports), globals.level);
+	const totalEnplanements = activeAirports.map(v => v.enplanements).reduce((a, b) => a + b, 0);
+	activeAirports.forEach((airport: airportType, i) => {
+		if(newAirports.includes(airport)) {
+			airport.connections = {};
+			activeAirports.forEach((airportB) => {
+				if(airportB == airport) return;
+				airport.connections[airportB.IATA] = {
+					location: airportB.IATA,
+					travelers: 0,
+					interest: 0, // To be filled in later
+					gates: 0,
+					speed: findSpeed(airport, airportB)
 				}
+			})
+		}
+		newAirports.forEach((airportB: airportType, j) => {
+			if(airportB == airport) return;
+			airport.connections[airportB.IATA] = {
+				location: airportB.IATA,
+				travelers: 0,
+				interest: 0, // To be filled in later
+				gates: 0,
+				speed: findSpeed(airport, airportB)
 			}
 		});
 		const totalTravelers = airport.travelers?.map(v => v.travelers).reduce((a, b) => a + b, 0)

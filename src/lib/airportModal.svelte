@@ -276,12 +276,9 @@
 										</td>
 									{/if}
 									<td
-										class="flex items-center justify-center {IATAtoAirport(
-											otherAirport.location
-										).gates?.filter(v=>!v).length === 0 ||
-										airport.gates?.filter(v=>!v).length === 0
-											? 'opacity-70'
-											: ''}"
+										class="flex items-center justify-center {otherAirport.gates
+											? ''
+											: 'opacity-70'}"
 										title="Direct gates to {otherAirport.location}"
 									>
 										<Infodot
