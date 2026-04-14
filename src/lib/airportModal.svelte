@@ -90,11 +90,20 @@
 	}
 	function sellAllGates() {
 		if (confirm(`Are you sure you want to sell all the gates at ${airport.IATA}?`)) {
-			for(const airport of getActiveAirports($airports, globals.level)) {
-				let connection = $airports[airportID].connections[airport.IATA]
+			for(const airportB of getActiveAirports($airports, globals.level)) {
+				if(airport == airportB) continue;
+				let connection = airport.connections[airportB.IATA]
+				if(connection.gates == 0) continue;
 				globals.tokens += 2 * connection.gates;
+
+				// Remove gates
 				connection.gates = 0;
+				airportB.connections[airport.IATA].gates = 0;
+				airportB.gates--;
 			}
+			airport.gates = 0;
+			console.log($airports);
+			$mapUpdatesClear++;
 		}
 	}
 	function replaceMiddleEntries(array: any[]): any[] {
