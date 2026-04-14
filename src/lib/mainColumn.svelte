@@ -76,11 +76,11 @@
 	function checkForNewAirports(airports) {
 		let list = [];
 		airports.forEach((airport) => {
-			if (!airport.gates.length) list.push(airport.IATA);
+			if (!airport.gates) list.push(airport.IATA);
 		});
 		if (!list.length) displayMessage = null;
 		else if (list.length > 4) {
-			list[4] = 'more';
+			list[4] = `${list.length - 4} more`;
 			displayMessage = `New airports: ${toList(list.slice(0, 5))}`;
 		} else displayMessage = `New airport${list.length !== 1 ? 's' : ''}: ${toList(list)}`;
 	}
