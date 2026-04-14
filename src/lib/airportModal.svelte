@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { airports, type airportType } from '$lib/airports';
+	import { airports, type airportType, type connectionType } from '$lib/airports';
 	import { globals } from '$lib/compiler';
 	import Counter from '$lib/counter.svelte';
 	import {
@@ -9,7 +9,10 @@
 		mapUpdates,
 		sortTravelers,
 		getDescription,
-		mapUpdatesClear
+		mapUpdatesClear,
+
+		getActiveAirports
+
 	} from '$lib/utils';
 	import Infodot from '$lib/infodot.svelte';
 	import { addGate, removeGate } from './gates';
@@ -26,14 +29,18 @@
 		| 'altRegional'
 		| 'regional'
 		| 'primary' = 'nonHub';
+	let sortedConnections: connectionType[];
 	airports.subscribe(() => {
 		(window as any).airports = $airports;
 		airport = $airports[airportID];
-		if (airport && airport?.type) airportHub = airport.type;
+		if (airport && airport?.type) {
+			airportHub = airport.type;
+			sortAllTravelers();
+		}
 	});
 	setInterval(() => {
-		$airports = (window as any).airports;
 		changeID(airportID);
+		$airports = (window as any).airports
 	}, 100);
 	function IATAtoAirport(IATA): airportType {
 		return $airports.filter(v=>v.IATA === IATA)?.[0];
@@ -76,24 +83,18 @@
 		} else return `${hours} hr ${minutes} min`;
 	}
 	function sortAllTravelers() {
-		$airports.filter(v=>v.queryResult < globals.level).forEach((airport) => {
-			airport.travelers.sort((a, b) => sortTravelers(airport, a, b));
-		});
+		sortedConnections = Object.values(airport.connections).sort((a, b) => sortTravelers(airport, a, b));
 		let oldID = airportID;
 		airportID = 0;
 		airportID = oldID;
 	}
 	function sellAllGates() {
 		if (confirm(`Are you sure you want to sell all the gates at ${airport.IATA}?`)) {
-			let Airport = new Proxy($airports[airportID], {});
-			let toRemoves = [];
-			Airport.gates.forEach((v) => {
-				toRemoves[toRemoves.length] = [getID(airport.IATA), getID(v.IATA)];
-			});
-			toRemoves.forEach((v) => {
-				removeGate(v[0], v[1]);
-			});
-			airport = airport;
+			for(const airport of getActiveAirports($airports, globals.level)) {
+				let connection = $airports[airportID].connections[airport.IATA]
+				globals.tokens += 2 * connection.gates;
+				connection.gates = 0;
+			}
 		}
 	}
 	function replaceMiddleEntries(array: any[]): any[] {
@@ -191,7 +192,7 @@
 							? `+${Math.round(airport.growthRate)} travelers/day`
 							: count(Math.round(airport.population), 'traveler', 's')}
 						<div class="h-2 w-2 rounded-full bg-current" />
-						{count(airport.gates?.length, 'gate', 's')}
+						{count(airport.gates, 'gate', 's')}
 						<button
 							class="rounded-full p-2 transition-all duration-500 {airportHub === 'primary'
 								? 'bg-primary-200 hover:bg-primary-300 dark:bg-primary-700 dark:hover:bg-primary-800'
@@ -243,8 +244,8 @@
 				</div>
 				{#key $mapUpdatesClear}
 					<table class="neatTable w-full text-md transition-all duration-500">
-						{#if airport.travelers}
-							{#each airport.travelers as otherAirport, i}
+						{#if airport.connections}
+							{#each sortedConnections as otherAirport, i}
 								{runFindConnection(i, otherAirport.location)}
 								<tr on:click={() => changeID(getID(otherAirport.location))} class="">
 									<td
@@ -289,9 +290,9 @@
 									<td class="w-14">
 										<Counter
 											add={() => {
-												addGate(airportID, getID(otherAirport.location), true);
+												addGate($airports[airportID], IATAtoAirport(otherAirport.location));
 											}}
-											subtract={() => removeGate(airportID, getID(otherAirport.location))}
+											subtract={() => removeGate($airports[airportID], IATAtoAirport(otherAirport.location))}
 										/>
 									</td>
 								</tr>

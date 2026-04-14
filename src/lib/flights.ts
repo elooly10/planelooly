@@ -1,33 +1,25 @@
 import { get } from 'svelte/store';
-import { airports, type airportType } from './airports';
-import { globals } from './compiler';
-import { findStops, IATAtoAirport } from './utils';
+import { airports, type airportType, type iata } from './airports';
+import { findStops, getActiveAirports, IATAtoAirport } from './utils';
 import { lastTime } from './tick';
 import { shuffle } from './utils/basic';
+import { globals } from './compiler';
 let flights: {
 	passengers: { destination: string; count: number }[];
 	arrivalTime: number;
 }[][] = [];
 let slots: number[][] = [];
-function getID(airport) {
-	return get(airports).indexOf(airport);
-}
 // This file is used to have people sit on the planes
 
 // Calculate what planes each A-B set is taking and then seat them
-export function sendFlight(fromID: number, toID: number, finalDestination: airportType) {
-	if (isNaN(fromID) || isNaN(toID)) return;
-	//Create Proxies
-	const from = new Proxy(get(airports)[fromID], {});
-	const to = new Proxy(get(airports)[toID], {});
-	const index = from.travelers.findIndex(v=>v.location === finalDestination.IATA);
-	let travelers = new Proxy(from.travelers[index], {});
+export function sendFlight(from: airportType, to: airportType, finalDestination: airportType) {
+	const connection = from.connections[finalDestination.IATA];
 
 	// First, we need to see how many of these travelers can fly
-	const amountMoving = Math.min(travelers.travelers, slots[from.IATA][to.IATA]);
+	const amountMoving = Math.min(connection.travelers, slots[from.IATA][to.IATA]);
 	// Then, we need to remove those seats from the slot
 	slots[from.IATA][to.IATA] -= amountMoving;
-	travelers.travelers -= amountMoving;
+	connection.travelers -= amountMoving;
 	from.population -= amountMoving;
 	// Then, they need to board the plane and prepare for takeoff
 	if (!flights[from.IATA]) flights[from.IATA] = [];
@@ -38,22 +30,22 @@ export function sendFlight(fromID: number, toID: number, finalDestination: airpo
 	} = new Proxy(flights[from.IATA][to.IATA], {});
 	if (!plane.passengers) plane.passengers = [];
 	plane.passengers[finalDestination.IATA] = amountMoving; // Plane boarded
-	plane.arrivalTime = from.gates.filter(v=>v.IATA == to.IATA)[0].speed + globals.day;
+	plane.arrivalTime = connection.speed + globals.day;
 	//console.log(`${from.IATA}->${to.IATA}`, plane);
 }
 // Find what planes are landing
 function landPlanes() {
-	let flightDepartureLocations = Object.keys(flights);
+	let flightDepartureLocations: iata[] = Object.keys(flights) as [];
 	flightDepartureLocations.forEach((flightDepartureLocationCode) => {
 		let flightDepartureLocation = flights[flightDepartureLocationCode];
 		let flightIDs = Object.keys(flightDepartureLocation);
-		flightIDs.forEach((flightArrivalLocation) => {
+		flightIDs.forEach((flightArrivalLocation: iata) => {
 			land(flightDepartureLocationCode, flightArrivalLocation);
 		});
 	});
 }
 // Prepare for landing
-function land(flightDepartureLocation: string, flightArrivalLocation: string) {
+function land(flightDepartureLocation: iata, flightArrivalLocation: iata) {
 	let flight: {
 		passengers?: { destination: string; count: number }[];
 		arrivalTime?: number;
@@ -71,26 +63,22 @@ function land(flightDepartureLocation: string, flightArrivalLocation: string) {
 				let nextAirport = new Proxy(get(airports).find(v=>v==nextAirportProxy), {});
 				// Add the passengers to their destination
 				nextAirport.population += group.count;
-				let travelersProxy: any = nextAirport.travelers.filter(v=>
-					v.location
-					==
-					group.destination
-				);
-				let travelerGroupID = nextAirport.travelers.indexOf(travelersProxy);
-				nextAirport.travelers[travelerGroupID].travelers += group.count;
+
+				let travelerGroupID = nextAirport.connections[group.destination];
+				nextAirport.connections[travelerGroupID].travelers += group.count;
 			}
 		});
 	}
 	//Clear the flight
 	flight = {};
 }
-function getSlots(airport) {
+function getSlots(airport: airportType) {
 	//Calculate how many slots there are on each flight
-	if (!airport.gates.filter(v=>!!v).length) return;
-	airport.gates.forEach((value) => {
-		if (value !== null) {
+	if (!airport.gates) return;
+	Object.values(airport.connections).forEach((value) => {
+		if (value.gates) {
 			if (!slots[airport.IATA]) slots[airport.IATA] = [];
-			slots[airport.IATA][value.IATA] = 20;
+			slots[airport.IATA][value.location] = 20;
 		}
 	});
 }
@@ -100,54 +88,36 @@ function resetSlots(airports: airportType[]) {
 	airports.forEach(getSlots);
 }
 
-//Takes a list of IATAs and a airportType.gates and finds one connected one
-function gatesInList(gates: any[], list: string[]) {
-	let options = [];
-	gates.forEach((value) => {
-		if (list.includes(value.IATA)) options.push(value.IATA);
-	});
-	return options;
-}
-
 // The entire airport's functions bottled down into a single function. I guess we get to ignore TSA.
 export function setFlights() {
-	const airportsNow: airportType[] = get(airports).filter(v=>v.queryResult <= globals.level);
+	const airportsNow: airportType[] = getActiveAirports(get(airports), globals.level);
 	resetSlots(airportsNow);
-	airportsNow.map((airportA) => {
+	airportsNow.forEach((airportA) => {
 		shuffle(airportsNow
 			.filter(v=>v.IATA != airportA.IATA))
 			.forEach((airportB) => {
 				// Find what gate you need to be at and board.
-				if (!airportB.gates.filter(v=>!!v).length) return;
+				if (!airportB.gates) return;
 				if (airportA !== airportB) {
 					const stops = findStops(airportA.IATA, airportB.IATA, airportsNow);
 					//console.log(stops);
 					if (!stops) return;
-					const firstDestination = IATAtoAirport(gatesInList(airportA.gates, stops)[0]);
-					if (firstDestination) {
-						let matchingGates = airportA.gates
-							.filter(v=>v.IATA==firstDestination.IATA);
-						const gate: { speed: number; IATA: string; count: number } = {
-							speed: matchingGates[0].speed,
-							IATA: firstDestination.IATA,
-							count: matchingGates.length
-						};
+					if (stops[0]) {
+						let gate = airportA.connections[stops[1]];
 						if (!gate || !gate.speed) {
 							console.error("Error: Its hard to fly to places that don't exist", {
 								airportA: airportA,
 								airportB: airportB,
 								gate: gate,
-								firstDestination: firstDestination,
-								stops: stops,
-								steps: [airportA.gates.filter(v=>!!v), firstDestination.IATA]
+								stops: stops
 							});
 							return;
 						}
 						//console.log(gate);
-						let takeoffDistance = gate.speed / gate.count;
+						let takeoffDistance = gate.speed / gate.gates;
 						if (lastTime % takeoffDistance > globals.day % takeoffDistance) {
-							console.log(`Sending flight from ${airportA.IATA} to ${firstDestination.IATA}`);
-							sendFlight(getID(airportA), getID(firstDestination), airportB);
+							console.log(`Sending flight from ${airportA.IATA} to ${stops[1]}`);
+							sendFlight(airportA, IATAtoAirport(stops[1]), airportB);
 						}
 					}
 				}

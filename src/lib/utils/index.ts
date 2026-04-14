@@ -1,5 +1,5 @@
 import { get, writable } from 'svelte/store';
-import { airports, type airportClass, type airportType } from '$lib/airports';
+import { airports, type airportClass, type airportType, type connectionType, type iata } from '$lib/airports';
 import { globals } from '../compiler';
 import { findPath } from '../travelAgent';
 export const states = {
@@ -68,19 +68,25 @@ export function postalToState(code) {
 }
 export function findConnection(airportA: airportType, airportB: airportType) {
 	try {
-		if (!airportA || !airportB) throw new Error('Invalid Airport');
-		const gates = [];
-		airportA.gates.forEach((value) => {
-			if (value === null) return;
-			if (value.IATA === airportB.IATA) gates.push(value);
-		});
-		const gateCount = gates.length;
+		if (!airportA || !airportB) throw 'Invalid Airport';
+		if(airportA == airportB) {
+			return {
+				amount: 0,
+				ending: '',
+				connected: false,
+				distance: 0,
+				locations: []
+			}
+		}
+		const gate = airportA.connections[airportB.IATA];
+		if(!gate) throw `No gate between ${airportA.IATA} and ${airportB.IATA}`;
+		const gateCount = gate.gates;
 		if (gateCount) {
 			return {
 				amount: gateCount,
 				ending: gateCount !== 1 ? 's' : '',
 				connected: true,
-				distance: gates[0].speed,
+				distance: gate.speed,
 				locations: []
 			};
 		} else {
@@ -97,8 +103,7 @@ export function findConnection(airportA: airportType, airportB: airportType) {
 			}
 			stops.forEach((value, index, arr) => {
 				const stop = IATAtoAirport(value);
-				const flight: { IATA: string; speed: number } = stop.gates
-					.filter((v)=>!!v && v.IATA === arr[index + 1])?.[0];
+				const flight = stop.connections[arr[index + 1]];
 				time += !flight ? 0 : flight.speed;
 			});
 			function getMiddleEntries(arr) {
@@ -161,25 +166,14 @@ export function findSpeed(airportA: airportType, airportB: airportType) {
 	const taxing = 0.07; // Other conditions not distance-dependant, e.g. taxing
 	return distance * speed + taxing;
 }
-export function IATAtoAirport(node) {
+export function IATAtoAirport(node: iata) {
 	return get(airports).find((a) => a.IATA === node);
 }
-export function findStops(airportA: string, airportB: string, airports: airportType[]) {
+export function findStops(airportA: iata, airportB: iata, airports: airportType[]) {
 	let store = findPath(IATAtoAirport(airportA), IATAtoAirport(airportB));
 	if (store.sumTime === -1) return null;
 	else return store.order;
 }
-
-// Find the Index of the connecting gate given two airports
-export function findGateIndex(airport: airportType, survey: airportType): number {
-	let index = -1;
-	airport.gates?.forEach((value, i) => {
-		if (!value) return false; /* Continue on Null */
-		if (value.IATA === survey.IATA) index = i;
-	});
-	return index;
-}
-
 export let mapUpdates = writable(Number.MIN_SAFE_INTEGER + 1);
 export let mapUpdatesClear = writable(Number.MIN_SAFE_INTEGER + 1);
 function findLength(connection: {
@@ -194,8 +188,8 @@ function findLength(connection: {
 }
 export function sortTravelers(
 	airport: airportType,
-	a: { location: string; travelers: number; interest: number },
-	b: { location: string; travelers: number; interest: number }
+	a: connectionType,
+	b: connectionType
 ) {
 	let airportA = IATAtoAirport(a.location);
 	let airportB = IATAtoAirport(b.location);
@@ -312,4 +306,10 @@ export function filterEnplanements(level: number, up: boolean = true) {
 		if (airport.enplanements > level) return up;
 		else return !up;
 	}
+}
+
+
+export function getActiveAirports(airports: airportType[], qr: number) {
+	let length = airports.findIndex(v => v.queryResult > qr);
+	return airports.slice(0, length);
 }

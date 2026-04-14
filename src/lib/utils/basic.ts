@@ -1,3 +1,5 @@
+import type { airportType } from "$lib/airports";
+
 // Remove array duplicates
 export function removeDuplicates(arr: any[]): any[] {
 	return [...new Set(arr)];
@@ -17,7 +19,7 @@ export function sortAlphabetically(a: string, b: string): number {
 	return a > b ? 1 : -1;
 }
 
-export function shuffle(array: any[]) {
+export function shuffle<T>(array: T[]): T[] {
 	let currentIndex = array.length;
 
 	// While there remain elements to shuffle...
