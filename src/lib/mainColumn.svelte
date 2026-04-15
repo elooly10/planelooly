@@ -80,8 +80,8 @@
 		});
 		if (!list.length) displayMessage = null;
 		else if (list.length > 4) {
-			list[4] = `${list.length - 4} more`;
-			displayMessage = `New airports: ${toList(list.slice(0, 5))}`;
+			list[3] = `${list.length - 3} more`;
+			displayMessage = `New airports: ${toList(list.slice(0, 4))}`;
 		} else displayMessage = `New airport${list.length !== 1 ? 's' : ''}: ${toList(list)}`;
 	}
 

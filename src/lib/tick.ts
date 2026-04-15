@@ -75,6 +75,7 @@ function increasePopulation() {
 					const initPopulation = Math.round(airport.population);
 					airport.population += growthRate * globals.increment
 					airport.unassignedTravelers = Math.round(airport.population) - initPopulation;
+					console.log(airport);
 				} else {
 					airport.population = defaultPopulationBase + Math.sqrt(airport.enplanements) * 2
 					airport.unassignedTravelers = Math.round(airport.population);
@@ -155,7 +156,7 @@ function addTravelers(newAirports: airportType[]) {
 			if (airportB == airport) continue;
 			viewed += airport.connections[airportB.IATA].interest;
 			airport.connections[airportB.IATA].interest /= sumInterests; // So it is a percent
-			if(viewed > rolls[rolls.length - 1]) {
+			while(viewed > rolls[rolls.length - 1]) {
 				rolls.splice(rolls.length - 1, 1);
 				airport.connections[airportB.IATA].travelers++;
 			}
