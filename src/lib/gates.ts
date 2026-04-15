@@ -62,7 +62,10 @@ import { resetCache } from './travelAgent';
 
 export function addGate(airportA: airportType, airportB: airportType, hideAlert = false) {
 	if (hideAlert || Confirm(`Connect ${airportA.IATA} and ${airportB.IATA}?`)) {
-		if (globals.tokens < 2) alert("You can't afford to connect these airports.");
+		if (globals.tokens < 2) {
+			alert("You can't afford to connect these airports.");
+			return;
+		}
 		airportA.connections[airportB.IATA].gates++;
 		airportB.connections[airportA.IATA].gates++;
 
@@ -80,7 +83,10 @@ export function addGate(airportA: airportType, airportB: airportType, hideAlert 
 }
 export function removeGate(airportA: airportType, airportB: airportType, hideAlert = false) {
 	if (hideAlert || Confirm(`Remove a gate between ${airportA.IATA} and ${airportB.IATA}?`)) {
-		if (airportA.connections[airportB.IATA].gates == 0 || airportB.connections[airportA.IATA].gates == 0) alert("These airports are not connected.");
+		if (airportA.connections[airportB.IATA].gates == 0 || airportB.connections[airportA.IATA].gates == 0) {
+			alert("These airports are not connected.");
+			return;
+		}
 		airportA.connections[airportB.IATA].gates--;
 		airportB.connections[airportA.IATA].gates--;
 

@@ -9,7 +9,7 @@
 	import MapModal from '$lib/map/modal.svelte';
 	import { delay } from '$lib/utils/basic';
 	let points = 70;
-	let gates = points * 2;
+	let gates = points;
 	let startTime: number, tickTime: number, lastTickTime: number;
 	let ticks: number = 0;
 	async function test() {

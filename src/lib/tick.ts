@@ -75,7 +75,6 @@ function increasePopulation() {
 					const initPopulation = Math.round(airport.population);
 					airport.population += growthRate * globals.increment
 					airport.unassignedTravelers = Math.round(airport.population) - initPopulation;
-					console.log(airport);
 				} else {
 					airport.population = defaultPopulationBase + Math.sqrt(airport.enplanements) * 2
 					airport.unassignedTravelers = Math.round(airport.population);
