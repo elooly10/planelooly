@@ -368,7 +368,7 @@
 					class="bg-black text-white bg-opacity-80 p-2 absolute top-0 right-0 h-screen flex items-center w-full"
 				>
 					<div class="overflow-scroll max-h-screen w-full">
-						<a href="/game/plane/simulator" class="text-blue-100 bold underline">Simulator</a>
+						<a href="/simulator" class="text-blue-100 bold underline">Simulator</a>
 						<details>
 							<summary class="text-xl font-bold text-white"
 								>Airports ({getAirports().length})</summary

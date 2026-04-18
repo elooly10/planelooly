@@ -4271,7 +4271,7 @@ export function getAirports(
 			location: "Salem",
 			IATA: "SLE",
 			state: "OR",
-			enplanements: 0.128,
+			enplanements: 0.077,
 			latitude: 44.91,
 			longitude: -123.003,
 			nearbyAirports: [

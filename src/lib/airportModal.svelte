@@ -117,6 +117,7 @@
 		if (!interestMode && airport.interestMode) {
 			console.log('Entering Interest Mode');
 			interestMode = true;
+			globals.travelersSortMode = 'interest'
 		} else if (!interestMode && !airport.interestMode) {
 			if (globals.tokens < 1) {
 				alert('You cannot afford to unlock interest mode for this airport.');
@@ -135,6 +136,7 @@
 			console.log('Exiting Interest Mode');
 			interestMode = false;
 		}
+		sortAllTravelers();
 	}
 </script>
 

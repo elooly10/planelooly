@@ -63,7 +63,7 @@ import { resetCache } from './travelAgent';
 export function addGate(airportA: airportType, airportB: airportType, hideAlert = false) {
 	if (hideAlert || Confirm(`Connect ${airportA.IATA} and ${airportB.IATA}?`)) {
 		if (globals.tokens < 2) {
-			alert("You can't afford to connect these airports.");
+			alert("You can't afford to buy these gates.");
 			return;
 		}
 		airportA.connections[airportB.IATA].gates++;
