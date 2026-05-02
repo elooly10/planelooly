@@ -213,12 +213,6 @@ export function sortTravelers(
 			haversineDistance(airport.latitude, airport.longitude, airportB.latitude, airportB.longitude)
 		);
 	} else if (globals.travelersSortMode === 'type') {
-		console.log(
-			airportB.type,
-			airportA.type,
-			typeToValue(airportB.type),
-			typeToValue(airportA.type)
-		);
 		return typeToValue(airportB.type) - typeToValue(airportA.type);
 	} else if (globals.travelersSortMode === 'interest') {
 		return b.interest - a.interest;

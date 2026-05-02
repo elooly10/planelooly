@@ -42,7 +42,7 @@ export function compiler() {
 		globals.starLevels = mode.ratings;
 
 		// Sort list
-		get(airports).sort((a, b) => a.queryResult - (b.queryResult ?? 0));
+		airports.set(get(airports).sort((a, b) => a.queryResult - (b.queryResult ?? 0)).slice(0, 100));
 
 		// Assign Tokens
 		globals.tokens = Math.round(

@@ -39,9 +39,6 @@ function incrementTime() {
 	if (globals.day >= globals.starLevels[globals.stars]) {
 		globals.stars++;
 	}
-	if (!(globals.stars - globals.starLevels.length)) {
-		globals.increment = 0;
-	}
 }
 function increasePopulation() {
 	let gotAirports = get(airports);

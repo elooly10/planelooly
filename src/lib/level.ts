@@ -1,6 +1,6 @@
 import { airports, type airportType, getAirports } from './airports';
 import { filterEnplanements, haversineDistance, IATAtoAirport } from './utils';
-import { shuffle } from './utils/basic';
+import { shuffle, sortAlphabetically } from './utils/basic';
 export interface Level {
 	number: number | string;
 	name: string;
@@ -182,6 +182,19 @@ function POP(airports: airportType[], central: airportType) {
 	airports.forEach((airport, i) => {
 		airport.queryResult = (central.enplanements - airport.enplanements) * 0.8;
 	});
+	return airports;
+}
+
+function ALPHA(airports: airportType[], central: airportType) {
+	airports.sort((a, b) => sortAlphabetically(a.IATA, b.IATA));
+	let centralIndex = airports.indexOf(central);
+	for(let i = 0; i < airports.length; i++) {
+		if(i < centralIndex) {
+			airports[i].queryResult = (centralIndex - i + airports.length) * 0.3
+		} else {
+			airports[i].queryResult = (i - centralIndex) * 0.3
+		}
+	}
 	return airports;
 }
 
@@ -859,7 +872,7 @@ export const levels: Level[] = [
 		starterAirport: () => regularGameplay(getAirports()),
 		hardness: 1.1,
 		image: '/icons/CC.svg',
-		ratings: [1, 15, 25]
+		ratings: [1, 15, 24]
 	},
 	{
 		number: 59,
@@ -872,7 +885,19 @@ export const levels: Level[] = [
 		hardness: 1.25,
 		image: '/icons/CC.svg',
 		ratings: [1, 18, 35]
-	}
+	},
+	{
+		number: 60,
+		name: 'Alphabetical',
+		airportsList: () =>
+			airports.set(getAirports()),
+		compiler: ALPHA,
+		starterAirport: () =>
+			regularGameplay(getAirports()),
+		hardness: 1.25,
+		image: '/icons/CC.svg',
+		ratings: [1, 10, 20]
+	},
 ];
 export function setLevel(levelID: number) {
 	if (levels[levelID]) {

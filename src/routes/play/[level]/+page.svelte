@@ -8,7 +8,7 @@
 	import Logo from '$lib/logo.svelte';
 	import MainColumn from '$lib/mainColumn.svelte';
 	import MapModal from '$lib/map/modal.svelte';
-	import { startTime } from '$lib/tick';
+	import { startTime, tick } from '$lib/tick';
 	import {
 		mapUpdates,
 		mapUpdatesClear,
@@ -30,7 +30,8 @@
 	let playSpeed = 1;
 	let showTutorial = level.number == 'T';
 	let won = false,
-		lost = false;
+		lost = false,
+		endless = false;
 	let autoFire = true;
 	let dblClick = true;
 	let volatilePinSize = true;
@@ -115,8 +116,8 @@
 			) >= 200;
 		showLoss = lost && !blockShow;
 		if (lost) globals.increment = 0;
-		won = !(globals.stars - globals.starLevels.length) && !blockShow && !lost;
-		showWin = won && !blockShow;
+		won = !(globals.stars - globals.starLevels.length) && !lost;
+		showWin = !endless && won;
 	}, 200);
 	let airportID = 0;
 
@@ -188,6 +189,11 @@
 			if (!inDevMode) console.log('Enabling Dev Mode');
 			// Enter special mode
 			inDevMode = !inDevMode;
+		}
+		else if(event.key == '0' && inDevMode) {
+			globals.increment = 500 / 24;
+			tick();
+			globals.increment = 0;
 		}
 		// Data dumps...
 		else if (event.key === 'Q' && inDevMode) {
@@ -416,12 +422,12 @@
 					</div>
 				</div>
 			</Modal>
-			<Modal bind:show={showWin} onclose={() => blockShow = true}>
+			<Modal bind:show={showWin} onclose={() => endless = true}>
 				<div class="flex items-center justify-between">
 					<h2 class='text-2xl font-bold'>You won!</h2>
 					<button
 						class="flex-grow-0 hover:bg-stone-300 dark:hover:bg-zinc-800 rounded-full w-12 h-12 text-2xl font-bold"
-						on:click={() => (showWin = false)}>&times;</button
+						on:click={() => {showWin = false; endless = true;}}>&times;</button
 					>
 				</div>
 				<div class="flex-col">
@@ -429,6 +435,9 @@
 						>You survived to Day {Math.floor(globals.day + 1)} and received all {globals.stars} stars.</span
 					>
 					<div class="flex">
+						<button class="btn color-btn-game-tertiary" on:click={()=>{showWin = false; endless = true}}
+							>Keep playing!</button
+						>
 						<button class="btn color-btn-game-secondary" on:click={refresh} data-sveltekit-reload
 							>Play Again</button
 						>
@@ -471,7 +480,7 @@
 				<!-- <div class="hidden md:block bg-black dark:bg-white opacity-80 rounded-sm h-1.5 w-6" /> -->
 				{#if lost}
 					<h3 class="text-2xl font-bold">You lost with {globals.stars} stars.</h3>
-				{:else if won}
+				{:else if won && !endless}
 					<h3 class="text-2xl font-bold">You won!</h3>
 				{:else}
 					<div class="flex items-center gap-2">
