@@ -1,4 +1,4 @@
-import { airports, type airportType, getAirports } from './airports';
+import { airports, type airportType, getAirports, type iata } from './airports';
 import { filterEnplanements, haversineDistance, IATAtoAirport } from './utils';
 import { shuffle, sortAlphabetically } from './utils/basic';
 export interface Level {
@@ -6,7 +6,7 @@ export interface Level {
 	name: string;
 	airportsList: () => void;
 	compiler: (airports: airportType[], central: airportType, details?: any) => airportType[];
-	starterAirport: () => string;
+	starterAirport: () => iata;
 	hardness: number;
 	image: string;
 	tutorial?: boolean;
@@ -142,8 +142,14 @@ export function STATE(
 	return airports;
 }
 function FARSTATE(a: airportType[], c: airportType, d: any = {}) {
-	d.farDistance = 0.5;
-	return STATE(a, c, d);
+	d.farDistance = 0.3;
+	let airports = STATE(a, c, d);
+	let qr = -1;
+	airports.forEach(v=> {
+		v.queryResult = qr;
+		qr += 0.5;
+	})
+	return airports;
 }
 function RAND(
 	airports: airportType[],
@@ -151,8 +157,8 @@ function RAND(
 	details: { popularityLevel?: number; favoritism?: string[]; startingAirports?: number } = {}
 ) {
 	let nd = details.favoritism ?? [];
-	details = Object.assign({ popularityLevel: 0.005, favoritism: [], startingAirports: 5 }, details);
-	let stack = -details.startingAirports / (10 / 3) + 0.3;
+	details = Object.assign({ popularityLevel: 0.005, favoritism: [], startingAirports: 3 }, details);
+	let stack = -details.startingAirports / (10 / 3);
 	function sort(a, b) {
 		if (nd.includes(a.IATA) && !nd.includes(b.IATA))
 			return (
@@ -240,7 +246,7 @@ export const levels: Level[] = [
 		starterAirport: () => 'PPG',
 		hardness: 0.9,
 		image: '/icons/AS.svg',
-		ratings: [4, 6.5, 28]
+		ratings: [4, 11, 16]
 	},
 	{
 		number: 4,
@@ -360,9 +366,9 @@ export const levels: Level[] = [
 		airportsList: () => airports.set(getAirports()),
 		compiler: FARSTATE,
 		starterAirport: () => 'GUM',
-		hardness: 0.9,
+		hardness: 0.6,
 		image: '/icons/GU.svg',
-		ratings: [4, 15, 70]
+		ratings: [8, 16, 30]
 	},
 	{
 		number: 14,
@@ -645,9 +651,9 @@ export const levels: Level[] = [
 		compiler: FARSTATE,
 		starterAirport: () =>
 			regularGameplay(getAirports(filterState('MP'))),
-		hardness: 1,
+		hardness: 0.5,
 		image: '/icons/MP.svg',
-		ratings: [20, 70, 80]
+		ratings: [10, 20, 35]
 	},
 	{
 		number: 39,
@@ -894,7 +900,7 @@ export const levels: Level[] = [
 		compiler: ALPHA,
 		starterAirport: () =>
 			regularGameplay(getAirports()),
-		hardness: 1.25,
+		hardness: 1.06,
 		image: '/icons/CC.svg',
 		ratings: [1, 10, 20]
 	},

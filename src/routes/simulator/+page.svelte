@@ -2,11 +2,11 @@
 	import { levels, STATE } from '$lib/level';
 	import { onMount } from 'svelte';
 	import { getDescription, IATAtoAirport, IATAtoHSL, postalToState } from '$lib/utils';
-	import { airports, getAirports, type airportType } from '$lib/airports';
+	import { airports, getAirports, type airportType, type iata } from '$lib/airports';
 	import Loading from '$lib/loading.svelte';
 	import { drawBarChart, drawPieChart, drawHistogram } from './charts';
 	import Logo from '$lib/logo.svelte';
-	import { mean } from '$lib/utils/basic';
+	import { formatTime, mean } from '$lib/utils/basic';
 	let levelID = 1;
 	let level = levels[levelID];
 	let chart: HTMLCanvasElement;
@@ -18,12 +18,7 @@
 	let chart2: HTMLCanvasElement;
 	let bucketType = 'desc';
 	let histoLoading = false;
-	let IATA = 'BOI',
-		useNAsorting = true,
-		popularityLevel = 0.1375,
-		farDistance = 0.8,
-		useNE = true;
-	let simulatedAirports: airportType[] = [];
+	let IATA: iata = 'BOI';
 	function starterChoicesChart() {
 		let starterAirport = level.starterAirport();
 		starterChoices.push(starterAirport);
@@ -49,8 +44,8 @@
 		updateHistogram();
 		setInterval(() => {
 			for (var i = 0; i < 10; i++) starterChoicesChart();
-			simulateCompile(level.starterAirport());
 		}, 10);
+		simulateCompile();
 	});
 	function updateType() {
 		ranges = [];
@@ -63,6 +58,7 @@
 		levelID = oldLevelID;
 		level.airportsList();
 		starterChoicesChart();
+		simulateCompile();
 	}
 	function updateHistogram() {
 		histoLoading = true;
@@ -77,10 +73,12 @@
 			);
 		histoLoading = false;
 	}
-	async function simulateCompile(centralStr: string) {
+	async function simulateCompile() {
+		IATA = IATA.toUpperCase() as iata;
 		level.airportsList();
-		let central = $airports[$airports.map(v=>v.IATA).indexOf(centralStr)];
+		let central = $airports.find(v=>v.IATA == IATA);
 		let compiled = level.compiler($airports, central).sort((a, b) => a.queryResult - b.queryResult);
+		let minQR = Math.max(0, compiled[2].queryResult);
 		compiled.forEach((value, i) => {
 			if (!ranges[i])
 				ranges[i] = {
@@ -91,27 +89,10 @@
 				ranges[i].a.push(value.queryResult);
 				ranges[i].t = mean(...ranges[i].a);
 			}
+			value.queryResult = (value.queryResult - minQR) / 0.85;
 		});
+
 	}
-	function simulate() {
-		let airports = getAirports();
-		if (airports.find((a) => a.IATA === IATA)) {
-			//console.log('Simulating...', IATAtoAirport(IATA), IATA);
-			simulatedAirports = STATE(
-				airports,
-				airports.find((a) => a.IATA === IATA),
-				{
-					useNAsorting: useNAsorting,
-					popularityLevel: popularityLevel,
-					farDistance: farDistance,
-					useNE: useNE
-				}
-			).sort((a, b) => a.queryResult - b.queryResult);
-			console.log(simulatedAirports);
-		}
-	}
-	simulate();
-	simulate();
 	let ranges: { a: number[]; t: number }[] = [];
 </script>
 <svelte:head>
@@ -156,7 +137,7 @@
 									class="dark:invert"
 									on:click={() => {
 										IATA = data.label;
-										simulate();
+										simulateCompile();
 									}}>{data.label}</td
 								>
 								
@@ -241,7 +222,7 @@
 		{/if}
 	</details>
 	<details open>
-		<summary class="font-bold text-lg">STATE simulator</summary>
+		<summary class="font-bold text-lg">Level Simulator</summary>
 		<div class="flex gap-4 items-center">
 			<div class="flex flex-col">
 				<label for="IATA" class="label">IATA</label>
@@ -250,44 +231,12 @@
 					class="input max-w-xs"
 					bind:value={IATA}
 					maxLength="3"
-					on:change={simulate}
+					on:change={simulateCompile}
 				/>
-			</div>
-			<div class="flex flex-col">
-				<label for="popL" class="label">Popularity Level</label>
-				<input
-					id="popL"
-					type="number"
-					class="input max-w-xs"
-					bind:value={popularityLevel}
-					min="0"
-					step="0.0005"
-					on:change={simulate}
-				/>
-			</div>
-			<div class="flex flex-col">
-				<input
-					id="NA"
-					type="checkbox"
-					class="input w-full h-10"
-					bind:checked={useNAsorting}
-					on:input={simulate}
-				/>
-				<label for="NA" class="label">Use NA sorting</label>
-			</div>
-			<div class="flex flex-col">
-				<input
-					id="NA"
-					type="checkbox"
-					class="input w-full h-10"
-					bind:checked={useNE}
-					on:input={simulate}
-				/>
-				<label for="NA" class="label">Use QueryImpact</label>
 			</div>
 			<button
 				on:click={() => {
-					simulate();
+					simulateCompile();
 				}}
 				class="ml-auto btn-no-margins color-btn-blue">Simulate</button
 			>
@@ -297,20 +246,20 @@
 				<table class="my-2 p-2 w-11/12 min-w-max text-center overflow-y-scroll">
 					<tr class="bg-blue-200 dark:bg-blue-800 sticky top-0">
 						<th>Rank</th>
-						<th>Score</th>
+						<th>Day Seen</th>
 						<th>IATA</th>
 						<th>Name</th>
 						<th>State</th>
 						<th>Popularity</th>
 					</tr>
-					{#each simulatedAirports as airport, i}
+					{#each $airports as airport, i}
 						{#key airport.queryResult}
-							<tr class={airport.enplanements > 1 ? 'font-bold' : ''}>
+							<tr class="{airport.enplanements > 1 ? 'font-bold' : ''} {airport.queryResult == 0 ? 'border-b border-black/80' : ''}">
 								<td class="bg-blue-100 dark:bg-blue-900 w-12">{i + 1}</td>
 								<td class="bg-blue-100 dark:bg-blue-900"
-									>{Math.round(airport.queryResult * 100) / 100}</td
+									>{formatTime(airport.queryResult)}</td
 								>
-								<td>{airport.IATA}</td>
+								<td on:click={()=>{IATA = airport.IATA; simulateCompile()}}>{airport.IATA}</td>
 								<td>{airport.location}</td>
 								<td>{postalToState(airport.state)}</td>
 								<td>{getDescription(airport.enplanements)}</td>

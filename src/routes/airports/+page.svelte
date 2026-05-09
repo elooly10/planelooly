@@ -56,9 +56,9 @@
 		if (!value) return [];
 		let searchContent = [
 			{ title: 'All Airports', subtitle: '' },
-			{ title: 'Major Airports', subtitle: '' },
 			{ title: 'Popular Airports', subtitle: '' },
-			{ title: 'Significant Airports', subtitle: '' },
+			{ title: 'Major Airports', subtitle: '' },
+			{ title: 'Midsize Airports', subtitle: '' },
 			{ title: 'Minor Airports', subtitle: '' },
 			{ title: 'Very Small Airports', subtitle: '' }
 		];
@@ -128,7 +128,7 @@
 			result === 'All Airports' ||
 			result === 'Popular Airports' ||
 			result === 'Major Airports' ||
-			result === 'Significant Airports' ||
+			result === 'Midsize Airports' ||
 			result === 'Minor Airports' ||
 			result === 'Very Small Airports'
 		) {
@@ -136,9 +136,9 @@
 				result === 'Popular Airports'
 					? $airports.filter(filterEnplanements(1))
 					: result === 'Major Airports'
-					? $airports.filter(filterEnplanements(0.75))
-					: result === 'Significant Airports'
 					? $airports.filter(filterEnplanements(0.1))
+					: result === 'Midsize Airports'
+					? $airports.filter((a)=>filterEnplanements(.1)(a) && filterEnplanements(1, false)(a))
 					: result === 'Minor Airports'
 					? $airports.filter(filterEnplanements(0.1, false))
 					: result === 'Very Small Airports'
@@ -310,7 +310,7 @@
 {/if}
 <div class="relative h-screen bg-gray-200">
 	<div class="absolute top-0 right-0 z-[9999] flex flex-col {dev ? 'h-screen' : 'h-max'}">
-		<div class="{dev ? 'relative' : ''} w-96 p-4 flex-grow flex flex-col overflow-scroll">
+		<div class="{dev ? 'relative' : ''} w-96 p-4 flex-grow flex flex-col overflow-y-auto">
 			<div class="absolute top-4 right-0 w-full px-4 z-[10000]">
 				<div class="w-full max-w-sm m-5 mx-auto">
 					<input
@@ -367,7 +367,7 @@
 				<div
 					class="bg-black text-white bg-opacity-80 p-2 absolute top-0 right-0 h-screen flex items-center w-full"
 				>
-					<div class="overflow-scroll max-h-screen w-full">
+					<div class="overflow-y-auto max-h-screen w-full">
 						<a href="/simulator" class="text-blue-100 bold underline">Simulator</a>
 						<details>
 							<summary class="text-xl font-bold text-white"

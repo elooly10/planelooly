@@ -207,7 +207,7 @@ export function drawHistogram(data: number[], buckets: number[], chart: HTMLCanv
 	data.forEach((data) => {
 		// buckets: [0, 5, 10]
 		let bucket = buckets.reduce((wideRegion, narrowRegion) => {
-			if (data > narrowRegion) return narrowRegion;
+			if (data >= narrowRegion) return narrowRegion;
 			return wideRegion;
 		}, -Infinity);
 		if (barsObj[bucket]) barsObj[bucket].count++;

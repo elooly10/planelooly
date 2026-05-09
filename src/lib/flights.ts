@@ -116,7 +116,6 @@ export function setFlights() {
 						//console.log(gate);
 						let takeoffDistance = gate.speed / gate.gates;
 						if (lastTime % takeoffDistance > globals.day % takeoffDistance) {
-							console.log(`Sending flight from ${airportA.IATA} to ${stops[1]}`);
 							sendFlight(airportA, IATAtoAirport(stops[1]), airportB);
 						}
 					}

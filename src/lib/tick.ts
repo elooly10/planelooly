@@ -1,7 +1,7 @@
 import { get } from 'svelte/store';
 import { globals, compiler } from './compiler';
 import { airports, type airportType } from './airports';
-import { findSpeed, getActiveAirports, haversineDistance, mapUpdatesClear } from './utils';
+import { addTokens, findSpeed, getActiveAirports, haversineDistance, mapUpdatesClear } from './utils';
 import { resetCache } from './travelAgent';
 import { setFlights } from './flights';
 import { browser } from '$app/environment';
@@ -15,25 +15,9 @@ function incrementTime() {
 	globals.day += globals.increment / 500;
 	globals.level =
 		globals.day * 0.85 +
-		Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult);
+		Math.max(0, airportCentral.queryResult, points[2].queryResult);
 	if (Math.floor(globals.day) !== Math.floor(lastTime) && globals.increment) {
-		globals.tokens +=
-			Math.max(
-				Math.ceil(globals.hardness * globals.day / 5),
-				Math.ceil(
-					globals.hardness *
-					points
-						.filter(v =>
-							v.queryResult <=
-							Math.ceil(globals.day + 0.01) * 0.85 +
-							Math.max(0, airportCentral.queryResult, points[2].queryResult)
-							&& v.queryResult >=
-							Math.floor(globals.day) * 0.85 +
-							Math.max(0, airportCentral.queryResult, points[2].queryResult)
-						).length *
-					2.35
-				)
-			);
+		globals.tokens += addTokens(airportCentral, points);
 		console.log('Updated Tokens');
 	}
 	if (globals.day >= globals.starLevels[globals.stars]) {
@@ -109,30 +93,27 @@ function calculateTravelers(
 function addTravelers(newAirports: airportType[]) {
 	const activeAirports = getActiveAirports(get(airports), globals.level);
 	const totalEnplanements = activeAirports.map(v => v.enplanements).reduce((a, b) => a + b, 0);
-	activeAirports.forEach((airport: airportType, i) => {
-		if(newAirports.includes(airport)) {
-			airport.connections = {};
-			activeAirports.forEach((airportB) => {
-				if(airportB == airport) return;
-				airport.connections[airportB.IATA] = {
-					location: airportB.IATA,
-					travelers: 0,
-					interest: 0, // To be filled in later
-					gates: 0,
-					speed: findSpeed(airport, airportB)
-				}
-			})
-		}
-		newAirports.forEach((airportB: airportType, j) => {
-			if(airportB == airport) return;
-			airport.connections[airportB.IATA] = {
-				location: airportB.IATA,
+	activeAirports.forEach((airport: airportType) => {
+		for(const newAirport of newAirports) {
+			if(newAirport == airport) continue;
+			const speed = findSpeed(airport, newAirport);
+			airport.connections[newAirport.IATA] = {
+				location: newAirport.IATA,
 				travelers: 0,
-				interest: 0, // To be filled in later
+				interest: 0,
 				gates: 0,
-				speed: findSpeed(airport, airportB)
+				speed
 			}
-		});
+			if(!newAirport.connections[airport.IATA]) {
+				newAirport.connections[airport.IATA] = {
+					location: airport.IATA,
+					travelers: 0,
+					interest: 0,
+					gates: 0,
+					speed
+				}
+			}
+		};
 		let sumInterests = 0;
 		for(const airportB of activeAirports) {
 			if (airportB == airport) continue;

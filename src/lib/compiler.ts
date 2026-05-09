@@ -2,6 +2,7 @@ import { airports } from '$lib/airports';
 import { mode } from '$lib/level';
 import { get, writable } from 'svelte/store';
 import { goto } from '$app/navigation';
+import { addTokens } from './utils';
 
 // Important stuff
 const globalWritable = writable({
@@ -40,20 +41,13 @@ export function compiler() {
 		mode.compiler(get(airports), airportCentral);
 		console.log('Level compiled, identifying star ratings');
 		globals.starLevels = mode.ratings;
-
+		globals.hardness = mode.hardness;
 		// Sort list
 		airports.set(get(airports).sort((a, b) => a.queryResult - (b.queryResult ?? 0)).slice(0, 100));
 
 		// Assign Tokens
-		globals.tokens = Math.round(
-			(get(airports).filter((v)=>
-				v.queryResult <
-				0.86 + Math.max(0, airportCentral.queryResult, get(airports)[2].queryResult)
-			).length *
-				3 -
-				3) *
-				globals.hardness
-		);
+		globals.tokens += Math.round(1.2 * addTokens(airportCentral, get(airports), -Infinity ));
+		globals.tokens++;
 	} else goto('/');
 }
 export let j = 0;

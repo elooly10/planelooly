@@ -274,7 +274,7 @@
 										<td colspan="2">No connection</td>
 									{:else if connections[i].connected}
 										<td colspan="2"
-											>{connections[i].connected ? '' : '>'}{getTime(connections[i].distance)}</td
+											>{getTime(connections[i].distance)}</td
 										>
 									{:else}
 										<td colspan="1">&gt;{getTime(connections[i].distance)}</td>

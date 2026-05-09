@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Loading from '$lib/loading.svelte';
-	import { airports, getAirports, type airportType } from '$lib/airports';
+	import { airports, getAirports, type airportType, type iata } from '$lib/airports';
 	import { IATAtoAirport } from '$lib/utils';
 	import { removeEntryByID } from '$lib/utils/basic';
 	import { onMount } from 'svelte';
@@ -21,7 +21,7 @@
 	};
 	async function loadFile(): Promise<file[]> {
 		airports.set(getAirports());
-		const response = await fetch(`/enplanements.csv`);
+		const response = await fetch(`/enplanements08.csv`);
 		const CSV = readCSV(await response.text());
 		const geo = await readGeo();
 		let returnArray = [];
@@ -44,9 +44,9 @@
 				Number(row[5]) > 2500
 					? Math.round(Number(row[5]) / 1000) / 1000
 					: Math.round(Number(row[5]) / 100) / 10000;
-			let airport = IATAtoAirport(row[1]);
+			let airport = IATAtoAirport(row[1] as iata);
 			if (Number(row[5]) > 1000 || airport)
-				if (airport) {
+				if (airport && geo[row[1]]) {
 					airport.latitude = geo[row[1]][1];
 					airport.longitude = geo[row[1]][0];
 				} else {
@@ -57,8 +57,8 @@
 				state: row[0],
 				IATA: row[1],
 				location: row[2],
-				latitude: geo[row[1]][1],
-				longitude: geo[row[1]][0],
+				latitude: geo[row[1]]?.[1] ?? null,
+				longitude: geo[row[1]]?.[0] ?? null,
 				airport,
 				enplanements: ENPfactor,
 				complete: airport?.enplanements == ENPfactor,

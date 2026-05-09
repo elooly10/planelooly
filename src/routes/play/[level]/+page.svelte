@@ -115,9 +115,9 @@
 				Math.max(...$airports.filter(v=>v.queryResult <= globals.level).map(v=>v.population))
 			) >= 200;
 		showLoss = lost && !blockShow;
-		if (lost) globals.increment = 0;
 		won = !(globals.stars - globals.starLevels.length) && !lost;
 		showWin = !endless && won;
+		if((showWin && !endless) || lost) globals.increment = 0;
 	}, 200);
 	let airportID = 0;
 
@@ -142,7 +142,6 @@
 	}
 
 	// Developer tools
-	let inDevMode = false;
 	function increaseSpeed(key = false) {
 		let speed = globals.increment;
 		switch (speed) {
@@ -185,26 +184,19 @@
 		} else if (event.key === 's') {
 			enterSettings();
 		}
-		if (event.key === '/') {
-			if (!inDevMode) console.log('Enabling Dev Mode');
-			// Enter special mode
-			inDevMode = !inDevMode;
-		}
-		else if(event.key == '0' && inDevMode) {
+		else if(event.key == '0') {
 			globals.increment = 500 / 24;
 			tick();
 			globals.increment = 0;
 		}
 		// Data dumps...
-		else if (event.key === 'Q' && inDevMode) {
+		else if (event.key === 'a') {
 			console.log($airports);
-		} else if (event.key === 'q' && inDevMode) {
+		} else if (event.key === 'q') {
 			console.log($airports.map(v=>v.IATA).join(', '));
-		} else if (event.key === 'G' && inDevMode) {
+		} else if (event.key === 'g') {
 			console.log(globals);
-		} else if (event.key === 'g' && inDevMode) {
-			console.log(JSON.stringify(globals, null, 2).slice(1, -1));
-		} else if (event.key === 'm' && inDevMode) {
+		} else if (event.key === 'm') {
 			console.log(
 				`Times map was updated but not reset: ${$mapUpdates - (Number.MIN_SAFE_INTEGER + 1)}.`
 			);
@@ -219,11 +211,8 @@
 					(Number.MIN_SAFE_INTEGER + 1)
 				}.`
 			);
-		} else if (event.key === 'L' && inDevMode) {
+		} else if (event.key === 'l') {
 			console.log(level);
-		} else if (event.key === 'l' && inDevMode) {
-			console.log(`Level ID: ${data.level}`);
-			console.log(`Level #: ${level.number}`);
 		}
 	}
 	// Go!

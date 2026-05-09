@@ -45,7 +45,7 @@ export interface airportType {
 	state: `${letter}${letter}` | `${letter}${letter}${letter}`;
 	enplanements: number;
 	queryResult?: number; //When it is added
-	connections: Partial<Record<iata, 
+	connections: Partial<Record<iata,
 		connectionType
 	>>;
 	gates?: number; // Total number of gates at an airport
@@ -53,7 +53,7 @@ export interface airportType {
 	population?: number;
 	growthRate?: number;
 	type?: airportClass;
-	nearbyAirports?: string[];
+	nearbyAirports?: iata[];
 	qrImpact?: number;
 	popularityChange?: number;
 	unassignedTravelers: number;
@@ -340,7 +340,7 @@ export function getAirports(
 			location: "Asheville",
 			IATA: "AVL",
 			state: "NC",
-			enplanements: 1.096,
+			enplanements: 0.996,
 			latitude: 35.436,
 			longitude: -82.542,
 		},
@@ -755,6 +755,7 @@ export function getAirports(
 				"LGB",
 				"SNA",
 				"ONT",
+				"OXR",
 				"SBD",
 				"RIV",
 				"VNY",
@@ -928,7 +929,7 @@ export function getAirports(
 			location: "Carlsbad",
 			IATA: "CLD",
 			state: "CA",
-			enplanements: 0.017,
+			enplanements: 0.046,
 			latitude: 33.128333,
 			longitude: -117.28,
 			nearbyAirports: [
@@ -1130,7 +1131,7 @@ export function getAirports(
 			location: "Dallas",
 			IATA: "DAL",
 			state: "TX",
-			enplanements: 8.655,
+			enplanements: 8.654,
 			latitude: 32.846,
 			longitude: -96.851,
 			nearbyAirports: [
@@ -1157,7 +1158,7 @@ export function getAirports(
 			location: "Washington",
 			IATA: "DCA",
 			state: "DC",
-			enplanements: 23.251,
+			enplanements: 23.301,
 			latitude: 38.851,
 			longitude: -77.038,
 			nearbyAirports: [
@@ -1479,7 +1480,7 @@ export function getAirports(
 			location: "Newark",
 			IATA: "EWR",
 			state: "NJ",
-			enplanements: 10.514,
+			enplanements: 13.575,
 			latitude: 40.692,
 			longitude: -74.169,
 			nearbyAirports: [
@@ -1537,7 +1538,7 @@ export function getAirports(
 			location: "Kalispell",
 			IATA: "FCA",
 			state: "MT",
-			enplanements: 0.404,
+			enplanements: 0.460,
 			latitude: 48.31056,
 			longitude: -114.25611,
 		},
@@ -1780,7 +1781,7 @@ export function getAirports(
 			location: "Green Bay",
 			IATA: "GRB",
 			state: "WI",
-			enplanements: 0.538,
+			enplanements: 0.438,
 			latitude: 44.485,
 			longitude: -88.13,
 			nearbyAirports: [
@@ -1802,7 +1803,7 @@ export function getAirports(
 			location: "Killeen",
 			IATA: "GRK",
 			state: "TX",
-			enplanements: 0.048,
+			enplanements: 0.085,
 			latitude: 31.067,
 			longitude: -97.829,
 		},
@@ -1872,7 +1873,7 @@ export function getAirports(
 			location: "Gulf Shores",
 			IATA: "GUF",
 			state: "AL",
-			enplanements: 0.012,
+			enplanements: 0.042,
 			latitude: 30.2897,
 			longitude: -87.6717,
 			nearbyAirports: [
@@ -2023,7 +2024,7 @@ export function getAirports(
 			location: "Houston (Hobby)",
 			IATA: "HOU",
 			state: "TX",
-			enplanements: 5.117,
+			enplanements: 7.117,
 			latitude: 29.646,
 			longitude: -95.277,
 			nearbyAirports: [
@@ -2122,7 +2123,7 @@ export function getAirports(
 			location: "Washington (Dulles)",
 			IATA: "IAD",
 			state: "DC",
-			enplanements: 13.003,
+			enplanements: 12.503,
 			latitude: 38.947,
 			longitude: -77.46,
 			nearbyAirports: [
@@ -2145,7 +2146,7 @@ export function getAirports(
 			location: "Houston",
 			IATA: "IAH",
 			state: "TX",
-			enplanements: 23.349,
+			enplanements: 23.449,
 			latitude: 29.984,
 			longitude: -95.341,
 			nearbyAirports: [
@@ -2442,7 +2443,7 @@ export function getAirports(
 			location: "Lakeland",
 			IATA: "LAL",
 			state: "FL",
-			enplanements: 0.054,
+			enplanements: 0.090,
 			latitude: 27.988,
 			longitude: -82.019,
 			nearbyAirports: [
@@ -2510,6 +2511,7 @@ export function getAirports(
 				"SBD",
 				"RIV",
 				"VNY",
+				"OXR"
 			],
 		},
 		{
@@ -2571,7 +2573,7 @@ export function getAirports(
 			location: "Columbus (Rickenbacker)",
 			IATA: "LCK",
 			state: "OH",
-			enplanements: 0.143,
+			enplanements: 0.153,
 			latitude: 39.814,
 			longitude: -82.928,
 			nearbyAirports: [
@@ -2750,14 +2752,14 @@ export function getAirports(
 			latitude: 31.943,
 			longitude: -102.202,
 		},
-		{
-			location: "Majuro",
-			IATA: "MAJ",
-			state: "MH",
-			enplanements: 0.976,
-			latitude: 7.064722,
-			longitude: -188.728056,
-		},
+		// {
+		// 	location: "Majuro",
+		// 	IATA: "MAJ",
+		// 	state: "MH",
+		// 	enplanements: 0.976,
+		// 	latitude: 7.064722,
+		// 	longitude: -188.728056,
+		// },
 		{
 			location: "Mayaquez",
 			IATA: "MAZ",
@@ -2781,7 +2783,7 @@ export function getAirports(
 			location: "Saginaw",
 			IATA: "MBS",
 			state: "MI",
-			enplanements: 0.075,
+			enplanements: 0.091,
 			latitude: 43.533,
 			longitude: -84.08,
 		},
@@ -2821,7 +2823,7 @@ export function getAirports(
 			location: "Orlando",
 			IATA: "MCO",
 			state: "FL",
-			enplanements: 23.36,
+			enplanements: 23.26,
 			latitude: 28.429,
 			longitude: -81.309,
 			nearbyAirports: [
@@ -3414,6 +3416,19 @@ export function getAirports(
 			],
 		},
 		{
+			location: "Oxnard",
+			IATA: "OXR",
+			state: "CA",
+			enplanements: 0.002,
+			latitude: 34.2,
+			longitude: -119.21,
+			nearbyAirports: [
+				"SBA",
+				"LAX",
+				"BUR"
+			],
+		},
+		{
 			location: "Everett",
 			IATA: "PAE",
 			state: "WA",
@@ -3888,14 +3903,14 @@ export function getAirports(
 			latitude: 14.18,
 			longitude: -214.75,
 		},
-		{
-			location: "Koror",
-			IATA: "ROR",
-			state: "PW",
-			enplanements: 1.249,
-			latitude: 7.367222,
-			longitude: -225.455833,
-		},
+		// {
+		// 	location: "Koror",
+		// 	IATA: "ROR",
+		// 	state: "PW",
+		// 	enplanements: 1.249,
+		// 	latitude: 7.367222,
+		// 	longitude: -225.455833,
+		// },
 		{
 			location: "Roswell",
 			IATA: "ROW",
@@ -3993,6 +4008,7 @@ export function getAirports(
 			nearbyAirports: [
 				"SMX",
 				"SBP",
+				"OXR",
 			],
 		},
 		{
@@ -4039,7 +4055,7 @@ export function getAirports(
 			longitude: -75.509,
 		},
 		{
-			location: "Deadhorse",
+			location: "Prudhoe Bay",
 			IATA: "SCC",
 			state: "AK",
 			enplanements: 0.097,
@@ -4156,7 +4172,7 @@ export function getAirports(
 			location: "St. George",
 			IATA: "SGU",
 			state: "UT",
-			enplanements: 0.261,
+			enplanements: 0.211,
 			latitude: 37.036,
 			longitude: -113.51,
 			nearbyAirports: [
@@ -4477,7 +4493,7 @@ export function getAirports(
 			location: "Newburgh (Stewart)",
 			IATA: "SWF",
 			state: "NY",
-			enplanements: 0.343,
+			enplanements: 0.243,
 			latitude: 41.504,
 			longitude: -74.105,
 		},
@@ -4743,7 +4759,7 @@ export function getAirports(
 			location: "Fort Walton Beach",
 			IATA: "VPS",
 			state: "FL",
-			enplanements: 1.065,
+			enplanements: 0.965,
 			latitude: 30.483,
 			longitude: -86.526,
 			nearbyAirports: [
@@ -4813,7 +4829,7 @@ export function getAirports(
 			location: "Williston",
 			IATA: "XWA",
 			state: "ND",
-			enplanements: 0.1,
+			enplanements: 0.099,
 			latitude: 48.26,
 			longitude: -103.751,
 			nearbyAirports: [
@@ -4852,41 +4868,41 @@ export function getAirports(
 			location: "Yuma",
 			IATA: "YUM",
 			state: "AZ",
-			enplanements: 0.11,
+			enplanements: 0.085,
 			latitude: 32.65667,
 			longitude: -114.60611,
 			nearbyAirports: [
 				"IPL",
 			],
 		},
-	{
-		location: 'Bowling Green',
-		IATA: 'BWG',
-		enplanements: 0.004,
-		state: 'KY',
-		longitude: -86.42,
-		latitude: 36.96,
-		qrImpact: -1
-	},
-	{
-		location: 'McCook',
-		IATA: 'MCK',
-		enplanements: 0.003,
-		state: 'NE',
-		longitude: -100.59,
-		latitude: 40.21,
-		nearbyAirports: ['LBF'],
-		qrImpact: -1
-	},
-	{
-		location: 'Wendover',
-		IATA: 'ENV',
-		longitude: -114.03,
-		latitude: 40.72,
-		state: 'UT',
-		enplanements: 0.023,
-		qrImpact: -1
-	},
+		{
+			location: 'Bowling Green',
+			IATA: 'BWG',
+			enplanements: 0.004,
+			state: 'KY',
+			longitude: -86.42,
+			latitude: 36.96,
+			qrImpact: -1
+		},
+		{
+			location: 'McCook',
+			IATA: 'MCK',
+			enplanements: 0.003,
+			state: 'NE',
+			longitude: -100.59,
+			latitude: 40.21,
+			nearbyAirports: ['LBF'],
+			qrImpact: -1
+		},
+		{
+			location: 'Wendover',
+			IATA: 'ENV',
+			longitude: -114.03,
+			latitude: 40.72,
+			state: 'UT',
+			enplanements: 0.023,
+			qrImpact: -1
+		},
 		{
 			location: 'Glendive',
 			IATA: 'GDV',
@@ -5066,6 +5082,16 @@ export function getAirports(
 			enplanements: 0.003,
 			qrImpact: -1,
 			nearbyAirports: ['RSW']
+		},
+		{
+			location: 'Saint Augustine',
+			IATA: 'UST',
+			latitude: 29.96,
+			longitude: -81.34,
+			state: 'FL',
+			enplanements: 0.008,
+			qrImpact: -1,
+			nearbyAirports: ['JAX']
 		},
 		{
 			location: 'New Bedford',

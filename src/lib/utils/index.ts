@@ -78,6 +78,15 @@ export function findConnection(airportA: airportType, airportB: airportType) {
 				locations: []
 			}
 		}
+		if(!airportA.gates || !airportB.gates) {
+			return {
+				amount: 0,
+				ending: '',
+				connected: false,
+				distance: 0,
+				locations: []
+			};
+		}
 		const gate = airportA.connections[airportB.IATA];
 		if(!gate) throw `No gate between ${airportA.IATA} and ${airportB.IATA}`;
 		const gateCount = gate.gates;
@@ -297,7 +306,7 @@ export function IATAfilter(airport: airportType, IATAs: string[], excludes: bool
 }
 export function filterEnplanements(level: number, up: boolean = true) {
 	return (airport: airportType) => {
-		if (airport.enplanements > level) return up;
+		if (airport.enplanements >= level) return up;
 		else return !up;
 	}
 }
@@ -306,4 +315,25 @@ export function filterEnplanements(level: number, up: boolean = true) {
 export function getActiveAirports(airports: airportType[], qr: number) {
 	let length = airports.findIndex(v => v.queryResult > qr);
 	return airports.slice(0, length);
+}
+
+export function addTokens(central: airportType, points: airportType[], startValue?: number) {
+	const initQR = Math.max(0, central.queryResult, points[2].queryResult);
+	const relevantPoints = points
+		.filter(v =>
+			v.queryResult <=
+			Math.ceil(globals.day + 0.01) * 0.85 +
+			initQR
+			&& v.queryResult >=
+			(startValue ?? (Math.floor(globals.day) * 0.85 +
+			initQR))
+		).length;
+	return Math.max(
+			Math.ceil(globals.hardness * globals.day / 5),
+			Math.ceil(
+				globals.hardness *
+				relevantPoints *
+				2.3
+			)
+		);
 }

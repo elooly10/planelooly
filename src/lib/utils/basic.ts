@@ -81,3 +81,18 @@ export function mean(...v: number[]) {
 	let sum = v.reduce((a, b) => a + b, 0)
 	return sum / v.length;
 }
+
+export function formatTime(time: number) {
+	if(time <= 0) return "Day 1";
+	// { Math.floor(airport.queryResult) }, { Math.floor(airport.queryResult / 24) }: { Math.floor(airport.queryResult / 1440) % 24 }
+	let day = Math.floor(time) + 1;
+	let hour = Math.floor(time * 24) % 24;
+	let min = Math.round(time * 1440) % 60;
+	if(hour >= 12) {
+		let hourFormat = hour == 12? 12 : hour - 12;
+		return `Day ${day}, ${hourFormat.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')} PM`
+	} else {
+		let hourFormat = hour == 0? 12 : hour;
+		return `Day ${day}, ${hourFormat.toString().padStart(2, '0')}:${min.toString().padStart(2, '0') } AM`
+	}
+}
